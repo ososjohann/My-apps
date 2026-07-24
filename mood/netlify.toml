@@ -1,0 +1,24 @@
+# Netlify config for the Mood Check-in PWA (static site — no build step).
+# Point the Netlify site's base/publish directory at this `mood/` folder.
+#
+# If this repo's root is the publish dir instead, set publish = "mood".
+[build]
+  publish = "."
+  command = ""
+
+# Service workers need correct MIME + no aggressive caching on the shell.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"

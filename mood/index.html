@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mood">
+<meta name="theme-color" content="#0f0d1a">
+<title>Mood Check-in</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  /* Self-hosted system font stack — no external requests, fully offline-capable. */
+  :root{
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI Rounded","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+    --bg:#0f0d1a;--surface:#191627;--surface2:#221e35;--border:#2e2942;
+    --accent:#8b7bff;--accent2:#b47eff;--glow:rgba(139,123,255,.4);
+    --good:#4ade80;--warn:#fbbf24;--bad:#f87171;
+    --text:#f3f1fb;--muted:#8b86a3;--radius:16px;
+    --safe-b:env(safe-area-inset-bottom);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  html{background:var(--bg);}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #1b1730 0%, var(--bg) 55%) no-repeat;
+    background-color:var(--bg);
+    color:var(--text);min-height:100dvh;
+    overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.4;
+    font-family:var(--font);
+  }
+  .app{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 0;}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+  .brand{font-size:26px;font-weight:900;letter-spacing:-.02em;}
+  .brand span{color:var(--accent2);}
+  .brand-sub{font-size:12px;color:var(--muted);font-weight:700;}
+
+  /* Tabs */
+  .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px;margin:12px 0 18px;}
+  .tab{flex:1;background:none;border:none;color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;padding:10px;border-radius:999px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px var(--glow);}
+  .tab .badge{background:rgba(255,255,255,.22);border-radius:999px;font-size:11px;font-weight:900;padding:1px 7px;min-width:20px;}
+  .tab:not(.active) .badge{background:var(--accent);color:#fff;}
+
+  .view{display:none;animation:fade .25s ease;padding-bottom:calc(40px + var(--safe-b));}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  /* Date */
+  .date-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+  .date-card .lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .date-card .val{font-size:19px;font-weight:900;margin-top:2px;}
+  .date-card input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:15px;font-weight:700;border-radius:10px;padding:9px 11px;outline:none;color-scheme:dark;}
+  .date-note{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700;}
+
+  .field{margin-bottom:22px;}
+  .field-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+  .field-title{font-size:15px;font-weight:800;}
+  .field-pick{font-size:13px;font-weight:800;color:var(--accent2);min-height:18px;}
+
+  .scale{display:grid;gap:7px;}
+  .scale.n7{grid-template-columns:repeat(7,1fr);}
+  .scale.n4{grid-template-columns:repeat(4,1fr);}
+  .dot{aspect-ratio:1;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:17px;font-weight:900;border-radius:13px;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;}
+  .dot:active{transform:scale(.9);}
+  .dot.sel{color:#fff;border-color:transparent;transform:translateY(-2px);}
+  .scale[data-kind=mood] .dot.sel{background:linear-gradient(135deg,#7c5cff,#b47eff);box-shadow:0 5px 16px var(--glow);}
+  .scale[data-kind=stress] .dot.sel{background:linear-gradient(135deg,#f59e0b,#f87171);box-shadow:0 5px 16px rgba(248,113,113,.35);}
+  .scale[data-kind=fullness] .dot.sel{background:linear-gradient(135deg,#22d3ee,#4ade80);box-shadow:0 5px 16px rgba(74,222,128,.3);}
+  .scale-ends{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-top:6px;padding:0 2px;}
+
+  /* Toggles */
+  .tog-row{display:flex;flex-direction:column;gap:10px;}
+  .tog{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;}
+  .tog-main{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .tog-label{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;}
+  .tog-label .emoji{font-size:20px;}
+  .switch{width:52px;height:30px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background .18s;flex-shrink:0;}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#6b6786;transition:all .18s;}
+  .switch.on{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;}
+  .switch.on::after{left:27px;background:#fff;}
+  .amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px;overflow:hidden;max-height:0;opacity:0;transition:all .2s ease;}
+  .amounts.show{max-height:120px;opacity:1;}
+  .amt{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:inherit;font-weight:800;font-size:13px;border-radius:11px;padding:11px 4px;cursor:pointer;transition:all .12s;text-align:center;line-height:1.25;}
+  .amt small{display:block;font-size:10px;font-weight:700;opacity:.7;margin-top:2px;}
+  .amt.sel{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;}
+
+  textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:16px;padding:14px;outline:none;resize:none;min-height:74px;transition:border-color .15s;}
+  textarea:focus{border-color:var(--accent);}
+
+  .save-btn{width:100%;border:none;border-radius:15px;color:#fff;font-family:inherit;font-size:18px;font-weight:900;padding:17px;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 24px var(--glow);transition:all .15s;margin-top:4px;letter-spacing:.01em;}
+  .save-btn:active{transform:scale(.98);}
+  .save-btn:disabled{opacity:.45;box-shadow:none;}
+  .prefill-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:13px;color:var(--muted);font-family:inherit;font-size:13px;font-weight:800;padding:12px;cursor:pointer;margin-bottom:18px;transition:all .15s;}
+  .prefill-btn:active{color:var(--text);border-color:var(--text);}
+
+  /* Sparkline */
+  .spark-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;}
+  .spark-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .spark svg{width:100%;height:46px;display:block;}
+
+  /* History */
+  .entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
+  .entry.exp{opacity:.5;}
+  .entry-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;}
+  .entry-date{font-size:15px;font-weight:900;}
+  .entry-tag{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--good);border:1px solid var(--good);border-radius:999px;padding:2px 8px;}
+  .entry-metrics{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+  .pill{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+  .pill em{font-style:normal;color:var(--muted);font-weight:700;}
+  .entry-note{font-size:13px;color:var(--muted);font-weight:600;margin:4px 0 8px;word-break:break-word;}
+  .entry-actions{display:flex;gap:8px;}
+  .mini-btn{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12px;font-weight:800;border-radius:10px;padding:9px;cursor:pointer;transition:all .12s;}
+  .mini-btn:active{transform:scale(.97);}
+  .mini-btn.danger{color:var(--bad);}
+
+  .export-bar{position:sticky;top:0;z-index:5;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;}
+  .export-bar .row{display:flex;gap:8px;}
+  .fmt-toggle{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:4px;margin-bottom:10px;}
+  .fmt-toggle button{flex:1;background:none;border:none;color:var(--muted);font-family:inherit;font-size:12px;font-weight:800;padding:7px;border-radius:999px;cursor:pointer;}
+  .fmt-toggle button.active{background:var(--accent);color:#fff;}
+  .exp-btn{flex:1;border:none;border-radius:11px;color:#fff;font-family:inherit;font-size:14px;font-weight:900;padding:13px;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:all .15s;}
+  .exp-btn.sec{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+  .exp-btn:active{transform:scale(.98);}
+  .exp-btn:disabled{opacity:.4;}
+  .export-meta{font-size:11px;color:var(--muted);font-weight:700;margin-top:9px;text-align:center;}
+  .clear-exp{width:100%;background:none;border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:12px;font-weight:800;border-radius:11px;padding:11px;cursor:pointer;margin-top:8px;}
+
+  .empty{text-align:center;color:var(--muted);padding:48px 20px;font-weight:700;}
+  .empty .big{font-size:40px;margin-bottom:10px;}
+  .empty h3{color:var(--text);font-size:18px;margin-bottom:6px;}
+
+  /* Toast */
+  .toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#2a2540;border:1px solid var(--border);color:var(--text);font-weight:800;font-size:14px;padding:12px 20px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .25s;z-index:300;max-width:90vw;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.ok{border-color:var(--good);}
+  .toast.err{border-color:var(--bad);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">Mood<span>·</span>log</div>
+    <div class="brand-sub" id="streak"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-log" onclick="showView('log')">✍️ Check-in</button>
+    <button class="tab" id="tab-hist" onclick="showView('hist')">📤 History <span class="badge" id="pending-badge">0</span></button>
+  </div>
+
+  <!-- ============ CHECK-IN ============ -->
+  <section class="view active" id="view-log">
+    <div class="spark-card" id="spark-card" style="display:none">
+      <div class="spark-head"><span>Last 14 moods</span><span id="spark-avg"></span></div>
+      <div class="spark" id="spark"></div>
+    </div>
+
+    <div class="date-card">
+      <div>
+        <div class="lbl">Check-in for</div>
+        <div class="val" id="date-display">—</div>
+        <div class="date-note" id="date-note"></div>
+      </div>
+      <input type="date" id="date-input" onchange="onDateChange()">
+    </div>
+
+    <button class="prefill-btn" id="prefill-btn" onclick="prefillYesterday()" style="display:none">↺ Same as my last check-in</button>
+
+    <div class="field">
+      <div class="field-head"><div class="field-title">😊 Mood</div><div class="field-pick" id="pick-mood"></div></div>
+      <div class="scale n7" data-kind="mood" id="scale-mood"></div>
+      <div class="scale-ends"><span>Terrible</span><span>Amazing</span></div>
+    </div>
+
+    <div class="field">
+      <div class="field-head"><div class="field-title">😰 Stress</div><div class="field-pick" id="pick-stress"></div></div>
+      <div class="scale n7" data-kind="stress" id="scale-stress"></div>
+      <div class="scale-ends"><span>None</span><span>Maxed out</span></div>
+    </div>
+
+    <div class="field">
+      <div class="field-head"><div class="field-title">🍽️ Fullness</div><div class="field-pick" id="pick-fullness"></div></div>
+      <div class="scale n4" data-kind="fullness" id="scale-fullness"></div>
+      <div class="scale-ends"><span>Hungry</span><span>Stuffed</span></div>
+    </div>
+
+    <div class="field">
+      <div class="tog-row">
+        <div class="tog">
+          <div class="tog-main">
+            <div class="tog-label"><span class="emoji">🍷</span> Alcohol</div>
+            <div class="switch" id="sw-alcohol" onclick="toggleFlag('alcohol')"></div>
+          </div>
+          <div class="amounts" id="amt-alcohol">
+            <button class="amt" data-v="small" onclick="pickAmount('alcohol','small')">Small<small>≤2 drinks</small></button>
+            <button class="amt" data-v="medium" onclick="pickAmount('alcohol','medium')">Medium<small>3–6</small></button>
+            <button class="amt" data-v="large" onclick="pickAmount('alcohol','large')">Large<small>7+</small></button>
+          </div>
+        </div>
+        <div class="tog">
+          <div class="tog-main">
+            <div class="tog-label"><span class="emoji">🌿</span> Cannabis</div>
+            <div class="switch" id="sw-cannabis" onclick="toggleFlag('cannabis')"></div>
+          </div>
+          <div class="amounts" id="amt-cannabis">
+            <button class="amt" data-v="small" onclick="pickAmount('cannabis','small')">Small<small>a puff</small></button>
+            <button class="amt" data-v="medium" onclick="pickAmount('cannabis','medium')">Medium<small>a bit silly</small></button>
+            <button class="amt" data-v="large" onclick="pickAmount('cannabis','large')">Large<small>out of reality</small></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-head"><div class="field-title">📝 Note</div></div>
+      <textarea id="note" placeholder="Anything worth remembering about today…" maxlength="600"></textarea>
+    </div>
+
+    <button class="save-btn" id="save-btn" onclick="saveEntry()">Save check-in</button>
+  </section>
+
+  <!-- ============ HISTORY / EXPORT ============ -->
+  <section class="view" id="view-hist">
+    <div class="export-bar" id="export-bar">
+      <div class="fmt-toggle">
+        <button id="fmt-csv" class="active" onclick="setFmt('csv')">CSV</button>
+        <button id="fmt-pipe" onclick="setFmt('pipe')">Pipe</button>
+      </div>
+      <div class="row">
+        <button class="exp-btn" id="copy-btn" onclick="doExport('copy')">📋 Copy</button>
+        <button class="exp-btn sec" id="dl-btn" onclick="doExport('download')">⬇︎ .csv</button>
+      </div>
+      <div class="export-meta" id="export-meta"></div>
+      <button class="clear-exp" id="mark-btn" onclick="markPendingExported()" style="display:none">✓ Mark pending as exported</button>
+      <button class="clear-exp" id="clearexp-btn" onclick="clearExported()" style="display:none">🗑 Clear exported entries</button>
+    </div>
+    <div id="entries"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Constants & schema ---------------- */
+const MOOD_LABELS = {1:'Terrible',2:'Bad',3:'Meh',4:'Okay',5:'Good',6:'Great',7:'Amazing'};
+const FULL_LABELS = {2:'Hungry',3:'Satisfied',4:'Full',5:'Stuffed'};
+const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note';
+const STORE_KEY = 'mood_entries_v1';
+let exportFmt = 'csv';
+
+/* ---------------- Draft state (current check-in) ---------------- */
+let draft = { date:'', mood:null, stress:null, fullness:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
+
+/* ---------------- Storage ---------------- */
+function loadEntries(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ return []; } }
+function saveEntries(list){ localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+
+/* ---------------- Date helpers (LOCAL time, per brief §4) ---------------- */
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtLocal(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function defaultDate(now){
+  now = now || new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Before 5am local, the check-in belongs to the day that just ended.
+  if (now.getHours() < 5) d.setDate(d.getDate() - 1);
+  return fmtLocal(d);
+}
+function prettyDate(iso){
+  const d = new Date(iso + 'T12:00:00');
+  const today = defaultDate();
+  const label = d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  return label;
+}
+
+/* ---------------- Build scales ---------------- */
+function buildScale(id, values){
+  const el = document.getElementById('scale-'+id);
+  el.innerHTML = values.map(v=>`<button class="dot" data-v="${v}" onclick="pickScale('${id}',${v})">${v}</button>`).join('');
+}
+function pickScale(kind, v){
+  draft[kind] = v;
+  const el = document.getElementById('scale-'+kind);
+  el.querySelectorAll('.dot').forEach(d=>d.classList.toggle('sel', +d.dataset.v===v));
+  const pick = document.getElementById('pick-'+kind);
+  if (kind==='mood') pick.textContent = v+' · '+MOOD_LABELS[v];
+  else if (kind==='fullness') pick.textContent = v+' · '+FULL_LABELS[v];
+  else pick.textContent = String(v);
+  updateSaveState();
+}
+
+/* ---------------- Toggles & amounts ---------------- */
+function toggleFlag(kind){
+  draft[kind] = draft[kind] ? 0 : 1;
+  const sw = document.getElementById('sw-'+kind);
+  const amt = document.getElementById('amt-'+kind);
+  sw.classList.toggle('on', !!draft[kind]);
+  amt.classList.toggle('show', !!draft[kind]);
+  if (!draft[kind]){ // turning off clears the amount (brief §3)
+    draft[kind+'_amount'] = '';
+    amt.querySelectorAll('.amt').forEach(a=>a.classList.remove('sel'));
+  } else if (!draft[kind+'_amount']) {
+    pickAmount(kind,'medium'); // sensible default so a flag=1 always has an amount
+  }
+}
+function pickAmount(kind, v){
+  draft[kind+'_amount'] = v;
+  document.getElementById('amt-'+kind).querySelectorAll('.amt').forEach(a=>a.classList.toggle('sel', a.dataset.v===v));
+}
+
+/* ---------------- Save state ---------------- */
+function updateSaveState(){
+  const ok = draft.mood!=null && draft.stress!=null && draft.fullness!=null && draft.date;
+  document.getElementById('save-btn').disabled = !ok;
+}
+
+/* ---------------- Date UI ---------------- */
+function onDateChange(){
+  draft.date = document.getElementById('date-input').value;
+  renderDateDisplay();
+  updateSaveState();
+}
+function renderDateDisplay(){
+  document.getElementById('date-display').textContent = prettyDate(draft.date);
+  document.getElementById('date-input').value = draft.date;
+  const now = new Date();
+  const note = (now.getHours() < 5 && draft.date === defaultDate())
+    ? "It's after midnight — defaulted to yesterday."
+    : (draft.date === fmtLocal(now) ? "Today" : "");
+  document.getElementById('date-note').textContent = note;
+}
+
+/* ---------------- Reset draft ---------------- */
+function resetDraft(){
+  draft = { date:defaultDate(), mood:null, stress:null, fullness:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
+  ['mood','stress','fullness'].forEach(k=>{
+    document.getElementById('scale-'+k).querySelectorAll('.dot').forEach(d=>d.classList.remove('sel'));
+    document.getElementById('pick-'+k).textContent='';
+  });
+  ['alcohol','cannabis'].forEach(k=>{
+    document.getElementById('sw-'+k).classList.remove('on');
+    document.getElementById('amt-'+k).classList.remove('show');
+    document.getElementById('amt-'+k).querySelectorAll('.amt').forEach(a=>a.classList.remove('sel'));
+  });
+  document.getElementById('note').value='';
+  renderDateDisplay();
+  updateSaveState();
+}
+
+/* ---------------- Prefill from last entry (nice-to-have) ---------------- */
+function prefillYesterday(){
+  const list = loadEntries();
+  if (!list.length) return;
+  const last = list[list.length-1];
+  pickScale('mood', last.mood);
+  pickScale('stress', last.stress);
+  pickScale('fullness', last.fullness);
+  ['alcohol','cannabis'].forEach(k=>{
+    if (last[k] && !draft[k]) toggleFlag(k);
+    else if (!last[k] && draft[k]) toggleFlag(k);
+    if (last[k]) pickAmount(k, last[k+'_amount'] || 'medium');
+  });
+  toast('Prefilled from last check-in');
+}
+
+/* ---------------- Save entry ---------------- */
+function saveEntry(){
+  if (draft.mood==null || draft.stress==null || draft.fullness==null) return;
+  const list = loadEntries();
+  const entry = {
+    id: Date.now()+'-'+Math.random().toString(36).slice(2,7),
+    date: draft.date,
+    mood: draft.mood,
+    mood_label: MOOD_LABELS[draft.mood],
+    stress: draft.stress,
+    fullness: draft.fullness,
+    fullness_label: FULL_LABELS[draft.fullness],
+    alcohol: draft.alcohol,
+    alcohol_amount: draft.alcohol ? (draft.alcohol_amount||'medium') : '',
+    cannabis: draft.cannabis,
+    cannabis_amount: draft.cannabis ? (draft.cannabis_amount||'medium') : '',
+    note: document.getElementById('note').value.trim(),
+    exported: false,
+    createdAt: new Date().toISOString()
+  };
+  // If an un-exported entry already exists for this date, overwrite it (avoid dupes)
+  const dupIdx = list.findIndex(e=>e.date===entry.date && !e.exported);
+  if (dupIdx>=0){ entry.id = list[dupIdx].id; list[dupIdx]=entry; toast('Updated '+entry.date,'ok'); }
+  else { list.push(entry); toast('Saved · '+entry.mood_label+' day','ok'); }
+  list.sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0);
+  saveEntries(list);
+  resetDraft();
+  renderAll();
+}
+
+/* ---------------- Edit / delete ---------------- */
+function editEntry(id){
+  const list = loadEntries();
+  const e = list.find(x=>x.id===id);
+  if (!e) return;
+  showView('log');
+  draft.date = e.date;
+  pickScale('mood', e.mood); pickScale('stress', e.stress); pickScale('fullness', e.fullness);
+  ['alcohol','cannabis'].forEach(k=>{
+    if (e[k] && !draft[k]) toggleFlag(k); else if (!e[k] && draft[k]) toggleFlag(k);
+    if (e[k]) pickAmount(k, e[k+'_amount']||'medium');
+  });
+  document.getElementById('note').value = e.note || '';
+  renderDateDisplay(); updateSaveState();
+  // remove the old copy; saving will re-add (dedupe by date handles it)
+  saveEntries(list.filter(x=>x.id!==id));
+  renderAll();
+  toast('Editing '+e.date);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteEntry(id){
+  const list = loadEntries().filter(e=>e.id!==id);
+  saveEntries(list); renderAll(); toast('Deleted');
+}
+
+/* ---------------- CSV / export ---------------- */
+function csvEscape(val){
+  const s = String(val==null?'':val);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+function toCsvRow(e){
+  return [
+    e.date, e.mood, e.mood_label, e.stress, e.fullness, e.fullness_label,
+    e.alcohol, e.alcohol_amount, e.cannabis, e.cannabis_amount, csvEscape(e.note)
+  ].join(',');
+}
+function toPipeRow(e){
+  // date | mood | stress | fullness | alcohol | cannabis | note  (labels/amounts inline)
+  const alc = e.alcohol ? ('yes('+e.alcohol_amount+')') : 'no';
+  const can = e.cannabis ? ('yes('+e.cannabis_amount+')') : 'no';
+  const mood = e.mood+' '+e.mood_label;
+  const full = e.fullness+' '+e.fullness_label;
+  const note = (e.note||'').replace(/\s+/g,' ').trim();
+  return [e.date, mood, e.stress, full, alc, can, note].join(' | ');
+}
+function buildExport(entries){
+  if (exportFmt==='csv') return entries.map(toCsvRow).join('\n');
+  const head = 'date | mood | stress | fullness | alcohol | cannabis | note';
+  return head + '\n' + entries.map(toPipeRow).join('\n');
+}
+function pendingEntries(){ return loadEntries().filter(e=>!e.exported); }
+
+function setFmt(f){
+  exportFmt = f;
+  document.getElementById('fmt-csv').classList.toggle('active', f==='csv');
+  document.getElementById('fmt-pipe').classList.toggle('active', f==='pipe');
+  renderExportBar();
+}
+function doExport(mode){
+  const pending = pendingEntries();
+  if (!pending.length){ toast('Nothing new to export','err'); return; }
+  const text = buildExport(pending);
+  if (mode==='copy'){
+    copyText(text).then(()=>{
+      toast('Copied '+pending.length+' row'+(pending.length>1?'s':'')+' — paste into chat','ok');
+    }).catch(()=> fallbackCopy(text));
+  } else {
+    // download: include header for CSV so it's a valid standalone file
+    const body = exportFmt==='csv' ? (CSV_HEADER+'\n'+text) : text;
+    const blob = new Blob([body],{type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download='mood_export_'+defaultDate()+(exportFmt==='csv'?'.csv':'.txt');
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('Downloaded '+pending.length+' row'+(pending.length>1?'s':''),'ok');
+  }
+}
+function copyText(text){
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  return Promise.reject();
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); toast('Copied','ok'); }catch(e){ toast('Copy failed — long-press to select','err'); }
+  ta.remove();
+}
+function markPendingExported(){
+  const list = loadEntries();
+  list.forEach(e=>{ if(!e.exported) e.exported=true; });
+  saveEntries(list); renderAll(); toast('Marked as exported','ok');
+}
+function clearExported(){
+  const list = loadEntries().filter(e=>!e.exported);
+  saveEntries(list); renderAll(); toast('Cleared exported entries');
+}
+
+/* ---------------- Rendering ---------------- */
+function renderExportBar(){
+  const pending = pendingEntries();
+  const all = loadEntries();
+  const exportedCount = all.length - pending.length;
+  document.getElementById('copy-btn').disabled = pending.length===0;
+  document.getElementById('dl-btn').disabled = pending.length===0;
+  document.getElementById('export-meta').textContent =
+    pending.length ? (pending.length+' new entr'+(pending.length>1?'ies':'y')+' ready to export')
+                   : (all.length ? 'All entries exported ✓' : 'No entries yet');
+  document.getElementById('mark-btn').style.display = pending.length ? 'block':'none';
+  document.getElementById('clearexp-btn').style.display = exportedCount ? 'block':'none';
+}
+function renderEntries(){
+  const box = document.getElementById('entries');
+  const list = loadEntries().slice().reverse();
+  if (!list.length){
+    box.innerHTML = '<div class="empty"><div class="big">🌙</div><h3>No check-ins yet</h3><div>Log tonight\'s mood from the Check-in tab.</div></div>';
+    return;
+  }
+  box.innerHTML = list.map(e=>{
+    const metrics = [
+      `<span class="pill">😊 <em>${e.mood}</em> ${e.mood_label}</span>`,
+      `<span class="pill">😰 <em>${e.stress}</em></span>`,
+      `<span class="pill">🍽️ <em>${e.fullness}</em> ${e.fullness_label}</span>`,
+      e.alcohol?`<span class="pill">🍷 ${e.alcohol_amount}</span>`:'',
+      e.cannabis?`<span class="pill">🌿 ${e.cannabis_amount}</span>`:''
+    ].filter(Boolean).join('');
+    return `<div class="entry ${e.exported?'exp':''}">
+      <div class="entry-top">
+        <span class="entry-date">${escapeHtml(prettyDateShort(e.date))}</span>
+        ${e.exported?'<span class="entry-tag">exported</span>':''}
+      </div>
+      <div class="entry-metrics">${metrics}</div>
+      ${e.note?`<div class="entry-note">${escapeHtml(e.note)}</div>`:''}
+      <div class="entry-actions">
+        <button class="mini-btn" onclick="editEntry('${e.id}')">✎ Edit</button>
+        <button class="mini-btn danger" onclick="deleteEntry('${e.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function prettyDateShort(iso){
+  const d = new Date(iso+'T12:00:00');
+  return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · '+iso;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderBadges(){
+  const p = pendingEntries().length;
+  document.getElementById('pending-badge').textContent = p;
+  document.getElementById('pending-badge').style.display = p? 'inline-block':'none';
+}
+function renderSpark(){
+  const list = loadEntries().slice(-14);
+  const card = document.getElementById('spark-card');
+  if (list.length < 2){ card.style.display='none'; return; }
+  card.style.display='block';
+  const vals = list.map(e=>e.mood);
+  const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+  document.getElementById('spark-avg').textContent = 'avg '+avg;
+  const W=100,H=40,pad=3;
+  const n=vals.length;
+  const x=i=> pad + (n===1?0:i*(W-2*pad)/(n-1));
+  const y=v=> H-pad - ((v-1)/6)*(H-2*pad);
+  const pts = vals.map((v,i)=>[x(i),y(v)]);
+  const line = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area = 'M'+pts[0][0].toFixed(1)+' '+H+' '+pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+' L'+pts[n-1][0].toFixed(1)+' '+H+' Z';
+  const dots = pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="1.6" fill="#b47eff"/>`).join('');
+  document.getElementById('spark').innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+       <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+         <stop offset="0" stop-color="#8b7bff" stop-opacity=".35"/>
+         <stop offset="1" stop-color="#8b7bff" stop-opacity="0"/></linearGradient></defs>
+       <path d="${area}" fill="url(#sg)"/>
+       <path d="${line}" fill="none" stroke="#b47eff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+       ${dots}
+     </svg>`;
+}
+function renderStreak(){
+  const list = loadEntries();
+  document.getElementById('streak').textContent = list.length ? (list.length+' logged') : '';
+}
+function renderAll(){ renderExportBar(); renderEntries(); renderBadges(); renderSpark(); renderStreak();
+  document.getElementById('prefill-btn').style.display = loadEntries().length ? 'block':'none'; }
+
+/* ---------------- Views ---------------- */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.getElementById('tab-'+(name==='log'?'log':'hist')).classList.add('active');
+  if (name==='hist') renderAll();
+  window.scrollTo({top:0});
+}
+
+/* ---------------- Toast ---------------- */
+let toastT;
+function toast(msg, kind){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(kind?' '+kind:'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast',2200);
+}
+
+/* ---------------- Netlify Forms hook (Option B) — future cloud backup ----------------
+   To enable a zero-backend cloud safety net later:
+   1. Add a hidden static form to index.html so Netlify's build bots detect it:
+        <form name="mood" data-netlify="true" hidden>
+          <input name="payload"><input name="form-name" value="mood">
+        </form>
+   2. In saveEntry(), after saveEntries(list), POST the entry:
+        fetch('/', {method:'POST',
+          headers:{'Content-Type':'application/x-www-form-urlencoded'},
+          body: new URLSearchParams({'form-name':'mood','payload':JSON.stringify(entry)})
+        }).catch(()=>{}); // fire-and-forget; localStorage stays the source of truth
+   3. Submissions appear in the Netlify dashboard, downloadable as CSV.
+   Kept out of v1 (Option A) so the app has no network dependency.
+------------------------------------------------------------------------------------ */
+
+/* ---------------- Init ---------------- */
+function init(){
+  buildScale('mood',[1,2,3,4,5,6,7]);
+  buildScale('stress',[1,2,3,4,5,6,7]);
+  buildScale('fullness',[2,3,4,5]);
+  resetDraft();
+  renderAll();
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
+}
+init();
+</script>
+</body>
+</html>
