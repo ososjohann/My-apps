@@ -77,9 +77,11 @@
   .scale[data-kind=stress] .dot.sel{background:linear-gradient(135deg,#f59e0b,#f87171);box-shadow:0 4px 14px rgba(248,113,113,.35);}
   .scale[data-kind=fullness] .dot.sel{background:linear-gradient(135deg,#22d3ee,#4ade80);box-shadow:0 4px 14px rgba(74,222,128,.3);}
 
-  /* Segmented controls (caffeine / social) */
+  /* Segmented control (social contact) */
   .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-  .seg-btn{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:800;border-radius:11px;padding:9px 4px;cursor:pointer;transition:all .12s;line-height:1.2;}
+  .seg.four{grid-template-columns:repeat(4,1fr);}
+  .seg-btn{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13px;font-weight:800;border-radius:11px;padding:8px 4px;cursor:pointer;transition:all .12s;line-height:1.15;}
+  .seg-btn .se{display:block;font-size:17px;margin-bottom:2px;line-height:1;}
   .seg-btn:active{transform:scale(.96);}
   .seg-btn.sel{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 14px var(--glow);}
 
@@ -193,24 +195,16 @@
 
     <div class="field">
       <div class="field-head"><div class="field-title">🍽️ Fullness</div><div class="field-pick" id="pick-fullness"></div></div>
-      <div class="scale-wrap"><span class="cap">🤤</span><div class="scale n4" data-kind="fullness" id="scale-fullness"></div><span class="cap">😮‍💨</span></div>
-    </div>
-
-    <div class="field">
-      <div class="field-head"><div class="field-title">☕ Caffeine</div><div class="field-pick" id="pick-caffeine"></div></div>
-      <div class="seg" id="seg-caffeine">
-        <button class="seg-btn" data-v="none" onclick="pickSeg('caffeine','none')">None</button>
-        <button class="seg-btn" data-v="before 2pm" onclick="pickSeg('caffeine','before 2pm')">Before 2pm</button>
-        <button class="seg-btn" data-v="after 2pm" onclick="pickSeg('caffeine','after 2pm')">After 2pm</button>
-      </div>
+      <div class="scale-wrap"><span class="cap">😩</span><div class="scale n5" data-kind="fullness" id="scale-fullness"></div><span class="cap">😮‍💨</span></div>
     </div>
 
     <div class="field">
       <div class="field-head"><div class="field-title">🫂 Social contact</div><div class="field-pick" id="pick-social"></div></div>
-      <div class="seg" id="seg-social">
-        <button class="seg-btn" data-v="none" onclick="pickSeg('social','none')">None</button>
-        <button class="seg-btn" data-v="some" onclick="pickSeg('social','some')">Some</button>
-        <button class="seg-btn" data-v="lots" onclick="pickSeg('social','lots')">Lots</button>
+      <div class="seg four" id="seg-social">
+        <button class="seg-btn" data-v="none" onclick="pickSeg('social','none')"><span class="se">🚫</span>None</button>
+        <button class="seg-btn" data-v="virtual" onclick="pickSeg('social','virtual')"><span class="se">💻</span>Virtual</button>
+        <button class="seg-btn" data-v="some" onclick="pickSeg('social','some')"><span class="se">🫂</span>Some</button>
+        <button class="seg-btn" data-v="lots" onclick="pickSeg('social','lots')"><span class="se">🥰</span>Lots</button>
       </div>
     </div>
 
@@ -272,17 +266,17 @@
 <script>
 /* ---------------- Constants & schema ---------------- */
 const MOOD_LABELS = {1:'Terrible',2:'Bad',3:'Meh',4:'Okay',5:'Good',6:'Great',7:'Amazing'};
-const FULL_LABELS = {2:'Hungry',3:'Satisfied',4:'Full',5:'Stuffed'};
+const FULL_LABELS = {1:'Starving',2:'Hungry',3:'Satisfied',4:'Full',5:'Stuffed'};
 const ENERGY_LABELS = {1:'Drained',2:'Low',3:'OK',4:'Good',5:'Energized'};
 // New columns are appended after `note` so existing mood_tracker.csv columns keep their positions.
-const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,caffeine,social';
+const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,social';
 const STORE_KEY = 'mood_entries_v1';
 // Chart colors (validated against the dark surface via the dataviz palette validator).
 const C = { mood:'#9085e9', energy:'#38bdf8', stress:'#d95926', good:'#4ade80', grid:'#443b66', ink:'#a29dbd' };
 let exportFmt = 'csv';
 
 /* ---------------- Draft state (current check-in) ---------------- */
-let draft = { date:'', mood:null, energy:null, stress:null, fullness:null, caffeine:null, social:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
+let draft = { date:'', mood:null, energy:null, stress:null, fullness:null, social:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
 
 /* ---------------- Storage ---------------- */
 function loadEntries(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ return []; } }
@@ -322,7 +316,7 @@ function pickScale(kind, v){
   updateSaveState();
 }
 
-/* ---------------- Segmented controls (caffeine / social) ---------------- */
+/* ---------------- Segmented control (social contact) ---------------- */
 function pickSeg(kind, v){
   draft[kind] = v;
   document.getElementById('seg-'+kind).querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('sel', b.dataset.v===v));
@@ -345,7 +339,7 @@ function setSubstance(kind, val){
 /* ---------------- Save state ---------------- */
 function updateSaveState(){
   const ok = draft.mood!=null && draft.energy!=null && draft.stress!=null && draft.fullness!=null
-          && draft.caffeine!=null && draft.social!=null && draft.date;
+          && draft.social!=null && draft.date;
   document.getElementById('save-btn').disabled = !ok;
 }
 
@@ -367,15 +361,13 @@ function renderDateDisplay(){
 
 /* ---------------- Reset draft ---------------- */
 function resetDraft(){
-  draft = { date:defaultDate(), mood:null, energy:null, stress:null, fullness:null, caffeine:null, social:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
+  draft = { date:defaultDate(), mood:null, energy:null, stress:null, fullness:null, social:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
   ['mood','energy','stress','fullness'].forEach(k=>{
     document.getElementById('scale-'+k).querySelectorAll('.dot').forEach(d=>d.classList.remove('sel'));
     document.getElementById('pick-'+k).textContent='';
   });
-  ['caffeine','social'].forEach(k=>{
-    document.getElementById('seg-'+k).querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('sel'));
-    document.getElementById('pick-'+k).textContent='';
-  });
+  document.getElementById('seg-social').querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('pick-social').textContent='';
   ['alcohol','cannabis'].forEach(k=>setSubstance(k,''));
   document.getElementById('note').value='';
   renderDateDisplay();
@@ -391,7 +383,6 @@ function prefillYesterday(){
   if (last.energy!=null) pickScale('energy', last.energy);
   pickScale('stress', last.stress);
   pickScale('fullness', last.fullness);
-  if (last.caffeine!=null) pickSeg('caffeine', last.caffeine);
   if (last.social!=null) pickSeg('social', last.social);
   ['alcohol','cannabis'].forEach(k=>setSubstance(k, last[k] ? (last[k+'_amount']||'medium') : ''));
   toast('Prefilled from last check-in');
@@ -400,7 +391,7 @@ function prefillYesterday(){
 /* ---------------- Save entry ---------------- */
 function saveEntry(){
   if (draft.mood==null || draft.energy==null || draft.stress==null || draft.fullness==null
-      || draft.caffeine==null || draft.social==null) return;
+      || draft.social==null) return;
   const list = loadEntries();
   const entry = {
     id: Date.now()+'-'+Math.random().toString(36).slice(2,7),
@@ -417,7 +408,6 @@ function saveEntry(){
     note: document.getElementById('note').value.trim(),
     energy: draft.energy,
     energy_label: ENERGY_LABELS[draft.energy],
-    caffeine: draft.caffeine,
     social: draft.social,
     exported: false,
     createdAt: new Date().toISOString()
@@ -441,7 +431,6 @@ function editEntry(id){
   draft.date = e.date;
   pickScale('mood', e.mood); pickScale('stress', e.stress); pickScale('fullness', e.fullness);
   if (e.energy!=null) pickScale('energy', e.energy);
-  if (e.caffeine!=null) pickSeg('caffeine', e.caffeine);
   if (e.social!=null) pickSeg('social', e.social);
   ['alcohol','cannabis'].forEach(k=>setSubstance(k, e[k] ? (e[k+'_amount']||'medium') : ''));
   document.getElementById('note').value = e.note || '';
@@ -469,22 +458,22 @@ function toCsvRow(e){
   return [
     e.date, e.mood, e.mood_label, e.stress, e.fullness, e.fullness_label,
     e.alcohol, e.alcohol_amount, e.cannabis, e.cannabis_amount, csvEscape(e.note),
-    blank(e.energy), eLabel, csvEscape(blank(e.caffeine)), csvEscape(blank(e.social))
+    blank(e.energy), eLabel, csvEscape(blank(e.social))
   ].join(',');
 }
 function toPipeRow(e){
-  // date | mood | energy | stress | fullness | caffeine | social | alcohol | cannabis | note
+  // date | mood | energy | stress | fullness | social | alcohol | cannabis | note
   const alc = e.alcohol ? ('yes('+e.alcohol_amount+')') : 'no';
   const can = e.cannabis ? ('yes('+e.cannabis_amount+')') : 'no';
   const mood = e.mood+' '+e.mood_label;
   const energy = e.energy!=null ? (e.energy+' '+(e.energy_label||ENERGY_LABELS[e.energy])) : '—';
   const full = e.fullness+' '+e.fullness_label;
   const note = (e.note||'').replace(/\s+/g,' ').trim();
-  return [e.date, mood, energy, e.stress, full, blank(e.caffeine)||'—', blank(e.social)||'—', alc, can, note].join(' | ');
+  return [e.date, mood, energy, e.stress, full, blank(e.social)||'—', alc, can, note].join(' | ');
 }
 function buildExport(entries){
   if (exportFmt==='csv') return entries.map(toCsvRow).join('\n');
-  const head = 'date | mood | energy | stress | fullness | caffeine | social | alcohol | cannabis | note';
+  const head = 'date | mood | energy | stress | fullness | social | alcohol | cannabis | note';
   return head + '\n' + entries.map(toPipeRow).join('\n');
 }
 function pendingEntries(){ return loadEntries().filter(e=>!e.exported); }
@@ -561,7 +550,6 @@ function renderEntries(){
       e.energy!=null?`<span class="pill">⚡ <em>${e.energy}</em> ${e.energy_label||ENERGY_LABELS[e.energy]}</span>`:'',
       `<span class="pill">😰 <em>${e.stress}</em></span>`,
       `<span class="pill">🍽️ <em>${e.fullness}</em> ${e.fullness_label}</span>`,
-      e.caffeine?`<span class="pill">☕ ${e.caffeine}</span>`:'',
       e.social?`<span class="pill">🫂 ${e.social}</span>`:'',
       e.alcohol?`<span class="pill">🍷 ${e.alcohol_amount}</span>`:'',
       e.cannabis?`<span class="pill">🌿 ${e.cannabis_amount}</span>`:''
@@ -680,12 +668,10 @@ function renderTrends(){
   const avgStress=mean(last14.map(e=>e.stress));
   const hasEnergy=last14.some(e=>e.energy!=null);
   // social groups (avg mood)
-  const socialOrder=['none','some','lots'];
+  const socialOrder=['none','virtual','some','lots'];
   const socialGroups=socialOrder.map(s=>{const g=all.filter(e=>e.social===s);return{label:s,value:mean(g.map(e=>e.mood)),n:g.length};});
-  // caffeine groups (avg energy)
-  const caffOrder=['none','before 2pm','after 2pm'];
-  const caffLabels={'none':'None','before 2pm':'Before 2','after 2pm':'After 2'};
-  const caffGroups=caffOrder.map(c=>{const g=all.filter(e=>e.caffeine===c && e.energy!=null);return{label:caffLabels[c],value:mean(g.map(e=>e.energy)),n:g.length};});
+  // energy by social contact (avg energy) — the second bar chart
+  const energyBySocial=socialOrder.map(s=>{const g=all.filter(e=>e.social===s && e.energy!=null);return{label:s,value:mean(g.map(e=>e.energy)),n:g.length};});
   const alcDays=all.filter(e=>e.alcohol).length;
   const cannaDays=all.filter(e=>e.cannabis).length;
 
@@ -711,14 +697,14 @@ function renderTrends(){
 
     <div class="chart-card">
       <h3>Mood by social contact</h3>
-      <div class="sub">Average mood on days grouped by face-to-face contact</div>
+      <div class="sub">Average mood grouped by how much contact you had</div>
       ${svgBarChart(socialGroups,C.mood,7,v=>v.toFixed(1))}
     </div>
 
     <div class="chart-card">
-      <h3>Energy by caffeine timing</h3>
-      <div class="sub">Average next-day-readiness proxy grouped by when you had caffeine</div>
-      ${svgBarChart(caffGroups,C.energy,5,v=>v.toFixed(1))}
+      <h3>Energy by social contact</h3>
+      <div class="sub">Average energy grouped by how much contact you had</div>
+      ${svgBarChart(energyBySocial,C.energy,5,v=>v.toFixed(1))}
     </div>
 
     <div class="stat-grid">
@@ -755,7 +741,7 @@ function init(){
   buildScale('mood',[1,2,3,4,5,6,7]);
   buildScale('energy',[1,2,3,4,5]);
   buildScale('stress',[1,2,3,4,5,6,7]);
-  buildScale('fullness',[2,3,4,5]);
+  buildScale('fullness',[1,2,3,4,5]);
   resetDraft();
   renderAll();
   if ('serviceWorker' in navigator){
