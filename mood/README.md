@@ -10,7 +10,7 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
 
 - Tap **mood (1–7)**, **energy (1–5)**, **stress (1–7)**, **fullness (2–5)** — no sliders.
 - One-tap **caffeine** (none / before 2pm / after 2pm) and **social contact** (none / some / lots).
-- Toggle **alcohol** / **cannabis**; a small/medium/large selector appears only when on.
+- **Alcohol** / **cannabis** as one dropdown each: None / Small / Medium / Large.
 - A **Trends** tab charts mood & energy over time and the correlations that matter —
   mood by social contact, energy by caffeine timing — plus rolling averages. All drawn
   as inline SVG (no chart library, still fully offline).

@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mood">
-<meta name="theme-color" content="#0f0d1a">
+<meta name="theme-color" content="#1b1730">
 <title>Mood Check-in</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15,70 +15,81 @@
   /* Self-hosted system font stack — no external requests, fully offline-capable. */
   :root{
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI Rounded","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
-    --bg:#0f0d1a;--surface:#191627;--surface2:#221e35;--border:#2e2942;
-    --accent:#8b7bff;--accent2:#b47eff;--glow:rgba(139,123,255,.4);
+    --bg:#1b1730;--surface:#282142;--surface2:#332b52;--border:#443b66;
+    --accent:#9a8cff;--accent2:#c08cff;--glow:rgba(154,140,255,.4);
     --good:#4ade80;--warn:#fbbf24;--bad:#f87171;
-    --text:#f3f1fb;--muted:#8b86a3;--radius:16px;
+    --text:#f4f2fb;--muted:#a29dbd;--radius:15px;
     --safe-b:env(safe-area-inset-bottom);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   html{background:var(--bg);}
   body{
-    background:radial-gradient(1200px 600px at 50% -10%, #1b1730 0%, var(--bg) 55%) no-repeat;
+    background:radial-gradient(1200px 600px at 50% -10%, #2a2348 0%, var(--bg) 55%) no-repeat;
     background-color:var(--bg);
     color:var(--text);min-height:100dvh;
     overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.4;
     font-family:var(--font);
   }
-  .app{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 0;}
+  .app{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;}
 
-  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
-  .brand{font-size:26px;font-weight:900;letter-spacing:-.02em;}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;}
+  .brand{font-size:23px;font-weight:900;letter-spacing:-.02em;}
   .brand span{color:var(--accent2);}
   .brand-sub{font-size:12px;color:var(--muted);font-weight:700;}
 
   /* Tabs */
-  .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px;margin:12px 0 18px;}
-  .tab{flex:1;background:none;border:none;color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;padding:10px;border-radius:999px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px;margin:8px 0 12px;}
+  .tab{flex:1;background:none;border:none;color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;padding:9px;border-radius:999px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
   .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px var(--glow);}
   .tab .badge{background:rgba(255,255,255,.22);border-radius:999px;font-size:11px;font-weight:900;padding:1px 7px;min-width:20px;}
   .tab:not(.active) .badge{background:var(--accent);color:#fff;}
 
-  .view{display:none;animation:fade .25s ease;padding-bottom:calc(40px + var(--safe-b));}
+  .view{display:none;animation:fade .25s ease;padding-bottom:calc(16px + var(--safe-b));}
+  #view-log{padding-bottom:calc(10px + var(--safe-b));}
   .view.active{display:block;}
   @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
   /* Date */
-  .date-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
-  .date-card .lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
-  .date-card .val{font-size:19px;font-weight:900;margin-top:2px;}
-  .date-card input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:15px;font-weight:700;border-radius:10px;padding:9px 11px;outline:none;color-scheme:dark;}
+  .date-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;}
+  .date-card .lbl{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .date-card .val{font-size:16px;font-weight:900;margin-top:1px;}
+  .date-card input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:8px 10px;outline:none;color-scheme:dark;}
   .date-note{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700;}
 
-  .field{margin-bottom:22px;}
-  .field-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-  .field-title{font-size:15px;font-weight:800;}
-  .field-pick{font-size:13px;font-weight:800;color:var(--accent2);min-height:18px;}
+  .field{margin-bottom:8px;}
+  .field-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .field-title{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;}
+  .field-title .end{font-size:15px;filter:saturate(1.1);}
+  .field-pick{font-size:13px;font-weight:800;color:var(--accent2);min-height:16px;}
 
-  .scale{display:grid;gap:7px;}
+  .scale-wrap{display:flex;align-items:center;gap:8px;}
+  .scale-wrap .cap{font-size:19px;flex:none;line-height:1;opacity:.9;}
+  .scale{display:grid;gap:6px;flex:1;}
   .scale.n7{grid-template-columns:repeat(7,1fr);}
   .scale.n5{grid-template-columns:repeat(5,1fr);}
   .scale.n4{grid-template-columns:repeat(4,1fr);}
-  .dot{aspect-ratio:1;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:17px;font-weight:900;border-radius:13px;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;}
+  .dot{height:40px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:16px;font-weight:900;border-radius:11px;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;}
   .dot:active{transform:scale(.9);}
-  .dot.sel{color:#fff;border-color:transparent;transform:translateY(-2px);}
-  .scale[data-kind=mood] .dot.sel{background:linear-gradient(135deg,#7c5cff,#b47eff);box-shadow:0 5px 16px var(--glow);}
-  .scale[data-kind=energy] .dot.sel{background:linear-gradient(135deg,#3b82f6,#38bdf8);box-shadow:0 5px 16px rgba(56,189,248,.32);}
-  .scale[data-kind=stress] .dot.sel{background:linear-gradient(135deg,#f59e0b,#f87171);box-shadow:0 5px 16px rgba(248,113,113,.35);}
-  .scale[data-kind=fullness] .dot.sel{background:linear-gradient(135deg,#22d3ee,#4ade80);box-shadow:0 5px 16px rgba(74,222,128,.3);}
-  .scale-ends{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-top:6px;padding:0 2px;}
+  .dot.sel{color:#fff;border-color:transparent;transform:translateY(-1px);}
+  .scale[data-kind=mood] .dot.sel{background:linear-gradient(135deg,#7c5cff,#b47eff);box-shadow:0 4px 14px var(--glow);}
+  .scale[data-kind=energy] .dot.sel{background:linear-gradient(135deg,#3b82f6,#38bdf8);box-shadow:0 4px 14px rgba(56,189,248,.32);}
+  .scale[data-kind=stress] .dot.sel{background:linear-gradient(135deg,#f59e0b,#f87171);box-shadow:0 4px 14px rgba(248,113,113,.35);}
+  .scale[data-kind=fullness] .dot.sel{background:linear-gradient(135deg,#22d3ee,#4ade80);box-shadow:0 4px 14px rgba(74,222,128,.3);}
 
   /* Segmented controls (caffeine / social) */
-  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
-  .seg-btn{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;border-radius:13px;padding:14px 6px;cursor:pointer;transition:all .12s;line-height:1.2;}
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .seg-btn{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:800;border-radius:11px;padding:9px 4px;cursor:pointer;transition:all .12s;line-height:1.2;}
   .seg-btn:active{transform:scale(.96);}
-  .seg-btn.sel{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 5px 16px var(--glow);}
+  .seg-btn.sel{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 14px var(--glow);}
+
+  /* Substance dropdowns (alcohol / cannabis) */
+  .dd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .dd-label{font-size:14px;font-weight:800;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+  select.dd{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:14px;font-weight:700;border-radius:11px;padding:10px 12px;outline:none;cursor:pointer;color-scheme:dark;appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23a29dbd' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;}
+  select.dd.on{border-color:var(--accent);}
 
   /* Trends / charts */
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
@@ -92,35 +103,14 @@
   .chart-card svg{width:100%;display:block;overflow:visible;}
   .chart-card .n-note{font-size:11px;font-weight:700;color:var(--muted);margin-top:8px;text-align:center;}
 
-  /* Toggles */
-  .tog-row{display:flex;flex-direction:column;gap:10px;}
-  .tog{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;}
-  .tog-main{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .tog-label{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;}
-  .tog-label .emoji{font-size:20px;}
-  .switch{width:52px;height:30px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background .18s;flex-shrink:0;}
-  .switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#6b6786;transition:all .18s;}
-  .switch.on{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;}
-  .switch.on::after{left:27px;background:#fff;}
-  .amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px;overflow:hidden;max-height:0;opacity:0;transition:all .2s ease;}
-  .amounts.show{max-height:120px;opacity:1;}
-  .amt{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:inherit;font-weight:800;font-size:13px;border-radius:11px;padding:11px 4px;cursor:pointer;transition:all .12s;text-align:center;line-height:1.25;}
-  .amt small{display:block;font-size:10px;font-weight:700;opacity:.7;margin-top:2px;}
-  .amt.sel{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;}
-
-  textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:16px;padding:14px;outline:none;resize:none;min-height:74px;transition:border-color .15s;}
+  textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:15px;padding:11px 13px;outline:none;resize:none;min-height:46px;transition:border-color .15s;}
   textarea:focus{border-color:var(--accent);}
 
-  .save-btn{width:100%;border:none;border-radius:15px;color:#fff;font-family:inherit;font-size:18px;font-weight:900;padding:17px;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 24px var(--glow);transition:all .15s;margin-top:4px;letter-spacing:.01em;}
+  .save-btn{width:100%;border:none;border-radius:14px;color:#fff;font-family:inherit;font-size:17px;font-weight:900;padding:13px;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 20px var(--glow);transition:all .15s;margin-top:6px;letter-spacing:.01em;}
   .save-btn:active{transform:scale(.98);}
   .save-btn:disabled{opacity:.45;box-shadow:none;}
-  .prefill-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:13px;color:var(--muted);font-family:inherit;font-size:13px;font-weight:800;padding:12px;cursor:pointer;margin-bottom:18px;transition:all .15s;}
+  .prefill-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:11px;color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:800;padding:9px;cursor:pointer;margin-bottom:11px;transition:all .15s;}
   .prefill-btn:active{color:var(--text);border-color:var(--text);}
-
-  /* Sparkline */
-  .spark-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;}
-  .spark-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .spark svg{width:100%;height:46px;display:block;}
 
   /* History */
   .entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
@@ -175,11 +165,6 @@
 
   <!-- ============ CHECK-IN ============ -->
   <section class="view active" id="view-log">
-    <div class="spark-card" id="spark-card" style="display:none">
-      <div class="spark-head"><span>Last 14 moods</span><span id="spark-avg"></span></div>
-      <div class="spark" id="spark"></div>
-    </div>
-
     <div class="date-card">
       <div>
         <div class="lbl">Check-in for</div>
@@ -193,26 +178,22 @@
 
     <div class="field">
       <div class="field-head"><div class="field-title">😊 Mood</div><div class="field-pick" id="pick-mood"></div></div>
-      <div class="scale n7" data-kind="mood" id="scale-mood"></div>
-      <div class="scale-ends"><span>Terrible</span><span>Amazing</span></div>
+      <div class="scale-wrap"><span class="cap">😞</span><div class="scale n7" data-kind="mood" id="scale-mood"></div><span class="cap">😄</span></div>
     </div>
 
     <div class="field">
       <div class="field-head"><div class="field-title">⚡ Energy</div><div class="field-pick" id="pick-energy"></div></div>
-      <div class="scale n5" data-kind="energy" id="scale-energy"></div>
-      <div class="scale-ends"><span>Drained</span><span>Energized</span></div>
+      <div class="scale-wrap"><span class="cap">🪫</span><div class="scale n5" data-kind="energy" id="scale-energy"></div><span class="cap">⚡</span></div>
     </div>
 
     <div class="field">
       <div class="field-head"><div class="field-title">😰 Stress</div><div class="field-pick" id="pick-stress"></div></div>
-      <div class="scale n7" data-kind="stress" id="scale-stress"></div>
-      <div class="scale-ends"><span>None</span><span>Maxed out</span></div>
+      <div class="scale-wrap"><span class="cap">😌</span><div class="scale n7" data-kind="stress" id="scale-stress"></div><span class="cap">😫</span></div>
     </div>
 
     <div class="field">
       <div class="field-head"><div class="field-title">🍽️ Fullness</div><div class="field-pick" id="pick-fullness"></div></div>
-      <div class="scale n4" data-kind="fullness" id="scale-fullness"></div>
-      <div class="scale-ends"><span>Hungry</span><span>Stuffed</span></div>
+      <div class="scale-wrap"><span class="cap">🤤</span><div class="scale n4" data-kind="fullness" id="scale-fullness"></div><span class="cap">😮‍💨</span></div>
     </div>
 
     <div class="field">
@@ -233,36 +214,30 @@
       </div>
     </div>
 
-    <div class="field">
-      <div class="tog-row">
-        <div class="tog">
-          <div class="tog-main">
-            <div class="tog-label"><span class="emoji">🍷</span> Alcohol</div>
-            <div class="switch" id="sw-alcohol" onclick="toggleFlag('alcohol')"></div>
-          </div>
-          <div class="amounts" id="amt-alcohol">
-            <button class="amt" data-v="small" onclick="pickAmount('alcohol','small')">Small<small>≤2 drinks</small></button>
-            <button class="amt" data-v="medium" onclick="pickAmount('alcohol','medium')">Medium<small>3–6</small></button>
-            <button class="amt" data-v="large" onclick="pickAmount('alcohol','large')">Large<small>7+</small></button>
-          </div>
-        </div>
-        <div class="tog">
-          <div class="tog-main">
-            <div class="tog-label"><span class="emoji">🌿</span> Cannabis</div>
-            <div class="switch" id="sw-cannabis" onclick="toggleFlag('cannabis')"></div>
-          </div>
-          <div class="amounts" id="amt-cannabis">
-            <button class="amt" data-v="small" onclick="pickAmount('cannabis','small')">Small<small>a puff</small></button>
-            <button class="amt" data-v="medium" onclick="pickAmount('cannabis','medium')">Medium<small>a bit silly</small></button>
-            <button class="amt" data-v="large" onclick="pickAmount('cannabis','large')">Large<small>out of reality</small></button>
-          </div>
-        </div>
+    <div class="field dd-grid">
+      <div>
+        <div class="dd-label">🍷 Alcohol</div>
+        <select class="dd" id="sel-alcohol" onchange="setSubstance('alcohol', this.value)">
+          <option value="">None</option>
+          <option value="small">Small · ≤2 drinks</option>
+          <option value="medium">Medium · 3–6</option>
+          <option value="large">Large · 7+</option>
+        </select>
+      </div>
+      <div>
+        <div class="dd-label">🌿 Cannabis</div>
+        <select class="dd" id="sel-cannabis" onchange="setSubstance('cannabis', this.value)">
+          <option value="">None</option>
+          <option value="small">Small · a puff</option>
+          <option value="medium">Medium · a bit silly</option>
+          <option value="large">Large · out of reality</option>
+        </select>
       </div>
     </div>
 
     <div class="field">
-      <div class="field-head"><div class="field-title">📝 Note</div></div>
-      <textarea id="note" placeholder="Anything worth remembering about today…" maxlength="600"></textarea>
+      <div class="field-head"><div class="field-title">📝 Note <span style="color:var(--muted);font-weight:700;font-size:12px">(optional)</span></div></div>
+      <textarea id="note" placeholder="Anything worth remembering…" maxlength="600" rows="1"></textarea>
     </div>
 
     <button class="save-btn" id="save-btn" onclick="saveEntry()">Save check-in</button>
@@ -303,7 +278,7 @@ const ENERGY_LABELS = {1:'Drained',2:'Low',3:'OK',4:'Good',5:'Energized'};
 const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,caffeine,social';
 const STORE_KEY = 'mood_entries_v1';
 // Chart colors (validated against the dark surface via the dataviz palette validator).
-const C = { mood:'#9085e9', energy:'#38bdf8', stress:'#d95926', good:'#4ade80', grid:'#2e2942', ink:'#8b86a3' };
+const C = { mood:'#9085e9', energy:'#38bdf8', stress:'#d95926', good:'#4ade80', grid:'#443b66', ink:'#a29dbd' };
 let exportFmt = 'csv';
 
 /* ---------------- Draft state (current check-in) ---------------- */
@@ -356,23 +331,15 @@ function pickSeg(kind, v){
   updateSaveState();
 }
 
-/* ---------------- Toggles & amounts ---------------- */
-function toggleFlag(kind){
-  draft[kind] = draft[kind] ? 0 : 1;
-  const sw = document.getElementById('sw-'+kind);
-  const amt = document.getElementById('amt-'+kind);
-  sw.classList.toggle('on', !!draft[kind]);
-  amt.classList.toggle('show', !!draft[kind]);
-  if (!draft[kind]){ // turning off clears the amount (brief §3)
-    draft[kind+'_amount'] = '';
-    amt.querySelectorAll('.amt').forEach(a=>a.classList.remove('sel'));
-  } else if (!draft[kind+'_amount']) {
-    pickAmount(kind,'medium'); // sensible default so a flag=1 always has an amount
-  }
-}
-function pickAmount(kind, v){
-  draft[kind+'_amount'] = v;
-  document.getElementById('amt-'+kind).querySelectorAll('.amt').forEach(a=>a.classList.toggle('sel', a.dataset.v===v));
+/* ---------------- Substance dropdowns (alcohol / cannabis) ----------------
+   One control per substance: "" (None) -> flag 0 & blank amount;
+   small/medium/large -> flag 1 & that amount. */
+function setSubstance(kind, val){
+  draft[kind] = val ? 1 : 0;
+  draft[kind+'_amount'] = val || '';
+  const sel = document.getElementById('sel-'+kind);
+  if (sel.value !== val) sel.value = val;       // keep UI in sync when called from edit/prefill
+  sel.classList.toggle('on', !!val);
 }
 
 /* ---------------- Save state ---------------- */
@@ -409,11 +376,7 @@ function resetDraft(){
     document.getElementById('seg-'+k).querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('sel'));
     document.getElementById('pick-'+k).textContent='';
   });
-  ['alcohol','cannabis'].forEach(k=>{
-    document.getElementById('sw-'+k).classList.remove('on');
-    document.getElementById('amt-'+k).classList.remove('show');
-    document.getElementById('amt-'+k).querySelectorAll('.amt').forEach(a=>a.classList.remove('sel'));
-  });
+  ['alcohol','cannabis'].forEach(k=>setSubstance(k,''));
   document.getElementById('note').value='';
   renderDateDisplay();
   updateSaveState();
@@ -430,11 +393,7 @@ function prefillYesterday(){
   pickScale('fullness', last.fullness);
   if (last.caffeine!=null) pickSeg('caffeine', last.caffeine);
   if (last.social!=null) pickSeg('social', last.social);
-  ['alcohol','cannabis'].forEach(k=>{
-    if (last[k] && !draft[k]) toggleFlag(k);
-    else if (!last[k] && draft[k]) toggleFlag(k);
-    if (last[k]) pickAmount(k, last[k+'_amount'] || 'medium');
-  });
+  ['alcohol','cannabis'].forEach(k=>setSubstance(k, last[k] ? (last[k+'_amount']||'medium') : ''));
   toast('Prefilled from last check-in');
 }
 
@@ -484,10 +443,7 @@ function editEntry(id){
   if (e.energy!=null) pickScale('energy', e.energy);
   if (e.caffeine!=null) pickSeg('caffeine', e.caffeine);
   if (e.social!=null) pickSeg('social', e.social);
-  ['alcohol','cannabis'].forEach(k=>{
-    if (e[k] && !draft[k]) toggleFlag(k); else if (!e[k] && draft[k]) toggleFlag(k);
-    if (e[k]) pickAmount(k, e[k+'_amount']||'medium');
-  });
+  ['alcohol','cannabis'].forEach(k=>setSubstance(k, e[k] ? (e[k+'_amount']||'medium') : ''));
   document.getElementById('note').value = e.note || '';
   renderDateDisplay(); updateSaveState();
   // remove the old copy; saving will re-add (dedupe by date handles it)
@@ -635,37 +591,11 @@ function renderBadges(){
   document.getElementById('pending-badge').textContent = p;
   document.getElementById('pending-badge').style.display = p? 'inline-block':'none';
 }
-function renderSpark(){
-  const list = loadEntries().slice(-14);
-  const card = document.getElementById('spark-card');
-  if (list.length < 2){ card.style.display='none'; return; }
-  card.style.display='block';
-  const vals = list.map(e=>e.mood);
-  const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
-  document.getElementById('spark-avg').textContent = 'avg '+avg;
-  const W=100,H=40,pad=3;
-  const n=vals.length;
-  const x=i=> pad + (n===1?0:i*(W-2*pad)/(n-1));
-  const y=v=> H-pad - ((v-1)/6)*(H-2*pad);
-  const pts = vals.map((v,i)=>[x(i),y(v)]);
-  const line = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-  const area = 'M'+pts[0][0].toFixed(1)+' '+H+' '+pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+' L'+pts[n-1][0].toFixed(1)+' '+H+' Z';
-  const dots = pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="1.6" fill="#b47eff"/>`).join('');
-  document.getElementById('spark').innerHTML =
-    `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-       <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-         <stop offset="0" stop-color="#8b7bff" stop-opacity=".35"/>
-         <stop offset="1" stop-color="#8b7bff" stop-opacity="0"/></linearGradient></defs>
-       <path d="${area}" fill="url(#sg)"/>
-       <path d="${line}" fill="none" stroke="#b47eff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-       ${dots}
-     </svg>`;
-}
 function renderStreak(){
   const list = loadEntries();
   document.getElementById('streak').textContent = list.length ? (list.length+' logged') : '';
 }
-function renderAll(){ renderExportBar(); renderEntries(); renderBadges(); renderSpark(); renderStreak();
+function renderAll(){ renderExportBar(); renderEntries(); renderBadges(); renderStreak();
   document.getElementById('prefill-btn').style.display = loadEntries().length ? 'block':'none'; }
 
 /* ---------------- Views ---------------- */
