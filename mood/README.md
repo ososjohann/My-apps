@@ -8,8 +8,12 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
 
 ## What it does
 
-- Tap **mood (1–7)**, **stress (1–7)**, **fullness (2–5)** — no sliders.
+- Tap **mood (1–7)**, **energy (1–5)**, **stress (1–7)**, **fullness (2–5)** — no sliders.
+- One-tap **caffeine** (none / before 2pm / after 2pm) and **social contact** (none / some / lots).
 - Toggle **alcohol** / **cannabis**; a small/medium/large selector appears only when on.
+- A **Trends** tab charts mood & energy over time and the correlations that matter —
+  mood by social contact, energy by caffeine timing — plus rolling averages. All drawn
+  as inline SVG (no chart library, still fully offline).
 - Free-text **note**.
 - **Date defaults to the day that just ended**: before 5am local time it defaults to
   *yesterday* (you log at night, often after midnight). Always shown, always editable.
@@ -22,18 +26,25 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
 The header of the desktop file is:
 
 ```
-date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note
+date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,caffeine,social
 ```
 
-The **Export** button (History tab) emits rows in exactly this order, **without the
-header**, one per line. The `mood_label` and `fullness_label` columns are auto-derived
-(1 Terrible … 7 Amazing; 2 Hungry … 5 Stuffed). Amount columns are **blank** (not `0`)
+The `energy` / `energy_label` / `caffeine` / `social` columns are **appended after
+`note`** so every original column keeps its position — add these four headers to the
+desktop `mood_tracker.csv` once; rows exported before they existed simply leave them
+blank.
+
+The **Export** button (Export tab) emits rows in exactly this order, **without the
+header**, one per line. The `mood_label`, `fullness_label`, and `energy_label` columns
+are auto-derived (mood 1 Terrible … 7 Amazing; fullness 2 Hungry … 5 Stuffed; energy
+1 Drained, 2 Low, 3 OK, 4 Good, 5 Energized). `caffeine` is `none` / `before 2pm` /
+`after 2pm`; `social` is `none` / `some` / `lots`. Amount columns are **blank** (not `0`)
 when the flag is off. Notes containing a comma/quote/newline are CSV-quoted.
 
 Example row:
 
 ```
-2026-07-23,5,Good,5,4,Full,0,,1,large,released a substack post today!
+2026-07-23,5,Good,5,4,Full,0,,1,large,released a substack post today!,4,Good,before 2pm,lots
 ```
 
 - **Copy** → clipboard (paste into desktop chat). This is the primary path.

@@ -63,14 +63,34 @@
 
   .scale{display:grid;gap:7px;}
   .scale.n7{grid-template-columns:repeat(7,1fr);}
+  .scale.n5{grid-template-columns:repeat(5,1fr);}
   .scale.n4{grid-template-columns:repeat(4,1fr);}
   .dot{aspect-ratio:1;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:17px;font-weight:900;border-radius:13px;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;}
   .dot:active{transform:scale(.9);}
   .dot.sel{color:#fff;border-color:transparent;transform:translateY(-2px);}
   .scale[data-kind=mood] .dot.sel{background:linear-gradient(135deg,#7c5cff,#b47eff);box-shadow:0 5px 16px var(--glow);}
+  .scale[data-kind=energy] .dot.sel{background:linear-gradient(135deg,#3b82f6,#38bdf8);box-shadow:0 5px 16px rgba(56,189,248,.32);}
   .scale[data-kind=stress] .dot.sel{background:linear-gradient(135deg,#f59e0b,#f87171);box-shadow:0 5px 16px rgba(248,113,113,.35);}
   .scale[data-kind=fullness] .dot.sel{background:linear-gradient(135deg,#22d3ee,#4ade80);box-shadow:0 5px 16px rgba(74,222,128,.3);}
   .scale-ends{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-top:6px;padding:0 2px;}
+
+  /* Segmented controls (caffeine / social) */
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+  .seg-btn{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;border-radius:13px;padding:14px 6px;cursor:pointer;transition:all .12s;line-height:1.2;}
+  .seg-btn:active{transform:scale(.96);}
+  .seg-btn.sel{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 5px 16px var(--glow);}
+
+  /* Trends / charts */
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+  .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+  .stat-tile .k{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .stat-tile .v{font-size:28px;font-weight:900;margin-top:4px;line-height:1;}
+  .stat-tile .v small{font-size:14px;font-weight:800;color:var(--muted);}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px 12px;margin-bottom:14px;}
+  .chart-card h3{font-size:15px;font-weight:800;text-transform:none;letter-spacing:0;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .chart-card .sub{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;}
+  .chart-card svg{width:100%;display:block;overflow:visible;}
+  .chart-card .n-note{font-size:11px;font-weight:700;color:var(--muted);margin-top:8px;text-align:center;}
 
   /* Toggles */
   .tog-row{display:flex;flex-direction:column;gap:10px;}
@@ -148,8 +168,9 @@
   </header>
 
   <div class="tabs">
-    <button class="tab active" id="tab-log" onclick="showView('log')">✍️ Check-in</button>
-    <button class="tab" id="tab-hist" onclick="showView('hist')">📤 History <span class="badge" id="pending-badge">0</span></button>
+    <button class="tab active" id="tab-log" onclick="showView('log')">✍️ Log</button>
+    <button class="tab" id="tab-trends" onclick="showView('trends')">📈 Trends</button>
+    <button class="tab" id="tab-hist" onclick="showView('hist')">📤 Export <span class="badge" id="pending-badge">0</span></button>
   </div>
 
   <!-- ============ CHECK-IN ============ -->
@@ -177,6 +198,12 @@
     </div>
 
     <div class="field">
+      <div class="field-head"><div class="field-title">⚡ Energy</div><div class="field-pick" id="pick-energy"></div></div>
+      <div class="scale n5" data-kind="energy" id="scale-energy"></div>
+      <div class="scale-ends"><span>Drained</span><span>Energized</span></div>
+    </div>
+
+    <div class="field">
       <div class="field-head"><div class="field-title">😰 Stress</div><div class="field-pick" id="pick-stress"></div></div>
       <div class="scale n7" data-kind="stress" id="scale-stress"></div>
       <div class="scale-ends"><span>None</span><span>Maxed out</span></div>
@@ -186,6 +213,24 @@
       <div class="field-head"><div class="field-title">🍽️ Fullness</div><div class="field-pick" id="pick-fullness"></div></div>
       <div class="scale n4" data-kind="fullness" id="scale-fullness"></div>
       <div class="scale-ends"><span>Hungry</span><span>Stuffed</span></div>
+    </div>
+
+    <div class="field">
+      <div class="field-head"><div class="field-title">☕ Caffeine</div><div class="field-pick" id="pick-caffeine"></div></div>
+      <div class="seg" id="seg-caffeine">
+        <button class="seg-btn" data-v="none" onclick="pickSeg('caffeine','none')">None</button>
+        <button class="seg-btn" data-v="before 2pm" onclick="pickSeg('caffeine','before 2pm')">Before 2pm</button>
+        <button class="seg-btn" data-v="after 2pm" onclick="pickSeg('caffeine','after 2pm')">After 2pm</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-head"><div class="field-title">🫂 Social contact</div><div class="field-pick" id="pick-social"></div></div>
+      <div class="seg" id="seg-social">
+        <button class="seg-btn" data-v="none" onclick="pickSeg('social','none')">None</button>
+        <button class="seg-btn" data-v="some" onclick="pickSeg('social','some')">Some</button>
+        <button class="seg-btn" data-v="lots" onclick="pickSeg('social','lots')">Lots</button>
+      </div>
     </div>
 
     <div class="field">
@@ -240,6 +285,11 @@
     </div>
     <div id="entries"></div>
   </section>
+
+  <!-- ============ TRENDS / INSIGHTS ============ -->
+  <section class="view" id="view-trends">
+    <div id="trends-content"></div>
+  </section>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -248,12 +298,16 @@
 /* ---------------- Constants & schema ---------------- */
 const MOOD_LABELS = {1:'Terrible',2:'Bad',3:'Meh',4:'Okay',5:'Good',6:'Great',7:'Amazing'};
 const FULL_LABELS = {2:'Hungry',3:'Satisfied',4:'Full',5:'Stuffed'};
-const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note';
+const ENERGY_LABELS = {1:'Drained',2:'Low',3:'OK',4:'Good',5:'Energized'};
+// New columns are appended after `note` so existing mood_tracker.csv columns keep their positions.
+const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,caffeine,social';
 const STORE_KEY = 'mood_entries_v1';
+// Chart colors (validated against the dark surface via the dataviz palette validator).
+const C = { mood:'#9085e9', energy:'#38bdf8', stress:'#d95926', good:'#4ade80', grid:'#2e2942', ink:'#8b86a3' };
 let exportFmt = 'csv';
 
 /* ---------------- Draft state (current check-in) ---------------- */
-let draft = { date:'', mood:null, stress:null, fullness:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
+let draft = { date:'', mood:null, energy:null, stress:null, fullness:null, caffeine:null, social:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
 
 /* ---------------- Storage ---------------- */
 function loadEntries(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ return []; } }
@@ -288,7 +342,17 @@ function pickScale(kind, v){
   const pick = document.getElementById('pick-'+kind);
   if (kind==='mood') pick.textContent = v+' · '+MOOD_LABELS[v];
   else if (kind==='fullness') pick.textContent = v+' · '+FULL_LABELS[v];
+  else if (kind==='energy') pick.textContent = v+' · '+ENERGY_LABELS[v];
   else pick.textContent = String(v);
+  updateSaveState();
+}
+
+/* ---------------- Segmented controls (caffeine / social) ---------------- */
+function pickSeg(kind, v){
+  draft[kind] = v;
+  document.getElementById('seg-'+kind).querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('sel', b.dataset.v===v));
+  const cap = v.charAt(0).toUpperCase()+v.slice(1);
+  document.getElementById('pick-'+kind).textContent = cap;
   updateSaveState();
 }
 
@@ -313,7 +377,8 @@ function pickAmount(kind, v){
 
 /* ---------------- Save state ---------------- */
 function updateSaveState(){
-  const ok = draft.mood!=null && draft.stress!=null && draft.fullness!=null && draft.date;
+  const ok = draft.mood!=null && draft.energy!=null && draft.stress!=null && draft.fullness!=null
+          && draft.caffeine!=null && draft.social!=null && draft.date;
   document.getElementById('save-btn').disabled = !ok;
 }
 
@@ -335,9 +400,13 @@ function renderDateDisplay(){
 
 /* ---------------- Reset draft ---------------- */
 function resetDraft(){
-  draft = { date:defaultDate(), mood:null, stress:null, fullness:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
-  ['mood','stress','fullness'].forEach(k=>{
+  draft = { date:defaultDate(), mood:null, energy:null, stress:null, fullness:null, caffeine:null, social:null, alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' };
+  ['mood','energy','stress','fullness'].forEach(k=>{
     document.getElementById('scale-'+k).querySelectorAll('.dot').forEach(d=>d.classList.remove('sel'));
+    document.getElementById('pick-'+k).textContent='';
+  });
+  ['caffeine','social'].forEach(k=>{
+    document.getElementById('seg-'+k).querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('sel'));
     document.getElementById('pick-'+k).textContent='';
   });
   ['alcohol','cannabis'].forEach(k=>{
@@ -356,8 +425,11 @@ function prefillYesterday(){
   if (!list.length) return;
   const last = list[list.length-1];
   pickScale('mood', last.mood);
+  if (last.energy!=null) pickScale('energy', last.energy);
   pickScale('stress', last.stress);
   pickScale('fullness', last.fullness);
+  if (last.caffeine!=null) pickSeg('caffeine', last.caffeine);
+  if (last.social!=null) pickSeg('social', last.social);
   ['alcohol','cannabis'].forEach(k=>{
     if (last[k] && !draft[k]) toggleFlag(k);
     else if (!last[k] && draft[k]) toggleFlag(k);
@@ -368,7 +440,8 @@ function prefillYesterday(){
 
 /* ---------------- Save entry ---------------- */
 function saveEntry(){
-  if (draft.mood==null || draft.stress==null || draft.fullness==null) return;
+  if (draft.mood==null || draft.energy==null || draft.stress==null || draft.fullness==null
+      || draft.caffeine==null || draft.social==null) return;
   const list = loadEntries();
   const entry = {
     id: Date.now()+'-'+Math.random().toString(36).slice(2,7),
@@ -383,6 +456,10 @@ function saveEntry(){
     cannabis: draft.cannabis,
     cannabis_amount: draft.cannabis ? (draft.cannabis_amount||'medium') : '',
     note: document.getElementById('note').value.trim(),
+    energy: draft.energy,
+    energy_label: ENERGY_LABELS[draft.energy],
+    caffeine: draft.caffeine,
+    social: draft.social,
     exported: false,
     createdAt: new Date().toISOString()
   };
@@ -404,6 +481,9 @@ function editEntry(id){
   showView('log');
   draft.date = e.date;
   pickScale('mood', e.mood); pickScale('stress', e.stress); pickScale('fullness', e.fullness);
+  if (e.energy!=null) pickScale('energy', e.energy);
+  if (e.caffeine!=null) pickSeg('caffeine', e.caffeine);
+  if (e.social!=null) pickSeg('social', e.social);
   ['alcohol','cannabis'].forEach(k=>{
     if (e[k] && !draft[k]) toggleFlag(k); else if (!e[k] && draft[k]) toggleFlag(k);
     if (e[k]) pickAmount(k, e[k+'_amount']||'medium');
@@ -427,24 +507,28 @@ function csvEscape(val){
   if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
   return s;
 }
+function blank(v){ return v==null ? '' : v; }
 function toCsvRow(e){
+  const eLabel = e.energy!=null ? (e.energy_label||ENERGY_LABELS[e.energy]||'') : '';
   return [
     e.date, e.mood, e.mood_label, e.stress, e.fullness, e.fullness_label,
-    e.alcohol, e.alcohol_amount, e.cannabis, e.cannabis_amount, csvEscape(e.note)
+    e.alcohol, e.alcohol_amount, e.cannabis, e.cannabis_amount, csvEscape(e.note),
+    blank(e.energy), eLabel, csvEscape(blank(e.caffeine)), csvEscape(blank(e.social))
   ].join(',');
 }
 function toPipeRow(e){
-  // date | mood | stress | fullness | alcohol | cannabis | note  (labels/amounts inline)
+  // date | mood | energy | stress | fullness | caffeine | social | alcohol | cannabis | note
   const alc = e.alcohol ? ('yes('+e.alcohol_amount+')') : 'no';
   const can = e.cannabis ? ('yes('+e.cannabis_amount+')') : 'no';
   const mood = e.mood+' '+e.mood_label;
+  const energy = e.energy!=null ? (e.energy+' '+(e.energy_label||ENERGY_LABELS[e.energy])) : '—';
   const full = e.fullness+' '+e.fullness_label;
   const note = (e.note||'').replace(/\s+/g,' ').trim();
-  return [e.date, mood, e.stress, full, alc, can, note].join(' | ');
+  return [e.date, mood, energy, e.stress, full, blank(e.caffeine)||'—', blank(e.social)||'—', alc, can, note].join(' | ');
 }
 function buildExport(entries){
   if (exportFmt==='csv') return entries.map(toCsvRow).join('\n');
-  const head = 'date | mood | stress | fullness | alcohol | cannabis | note';
+  const head = 'date | mood | energy | stress | fullness | caffeine | social | alcohol | cannabis | note';
   return head + '\n' + entries.map(toPipeRow).join('\n');
 }
 function pendingEntries(){ return loadEntries().filter(e=>!e.exported); }
@@ -518,8 +602,11 @@ function renderEntries(){
   box.innerHTML = list.map(e=>{
     const metrics = [
       `<span class="pill">😊 <em>${e.mood}</em> ${e.mood_label}</span>`,
+      e.energy!=null?`<span class="pill">⚡ <em>${e.energy}</em> ${e.energy_label||ENERGY_LABELS[e.energy]}</span>`:'',
       `<span class="pill">😰 <em>${e.stress}</em></span>`,
       `<span class="pill">🍽️ <em>${e.fullness}</em> ${e.fullness_label}</span>`,
+      e.caffeine?`<span class="pill">☕ ${e.caffeine}</span>`:'',
+      e.social?`<span class="pill">🫂 ${e.social}</span>`:'',
       e.alcohol?`<span class="pill">🍷 ${e.alcohol_amount}</span>`:'',
       e.cannabis?`<span class="pill">🌿 ${e.cannabis_amount}</span>`:''
     ].filter(Boolean).join('');
@@ -586,9 +673,128 @@ function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
-  document.getElementById('tab-'+(name==='log'?'log':'hist')).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
   if (name==='hist') renderAll();
+  if (name==='trends') renderTrends();
   window.scrollTo({top:0});
+}
+
+/* ---------------- Trends / charts ----------------
+   Each chart is a single series (one measure), so no cross-series color
+   coding is needed; values are shown as direct labels rather than hover
+   tooltips (better on touch). Colors validated against the dark surface. */
+function mean(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function svgLineChart(entries, key, color, yMin, yMax, unitLabel){
+  const data = entries.filter(e=>e[key]!=null).slice(-30);
+  const W=320,H=120, L=8,R=18,T=12,B=22;
+  if (data.length<2) return `<div class="n-note">Need at least 2 check-ins with ${unitLabel}.</div>`;
+  const n=data.length;
+  const x=i=> L + (n===1?0:i*(W-L-R)/(n-1));
+  const y=v=> T + (1-(v-yMin)/(yMax-yMin))*(H-T-B);
+  const pts=data.map((e,i)=>[x(i),y(e[key])]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area='M'+pts[0][0].toFixed(1)+' '+(H-B)+' '+pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+' L'+pts[n-1][0].toFixed(1)+' '+(H-B)+' Z';
+  const gid='g_'+key;
+  // gridlines at yMin..yMax integer steps
+  let grid='';
+  for(let v=yMin; v<=yMax; v++){ const gy=y(v).toFixed(1); grid+=`<line x1="${L}" y1="${gy}" x2="${W-R}" y2="${gy}" stroke="${C.grid}" stroke-width="0.6"/><text x="${W-R+3}" y="${(+gy+3).toFixed(1)}" fill="${C.ink}" font-size="8" font-weight="700">${v}</text>`; }
+  const dots=pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.4" fill="${color}"/>`).join('');
+  // first & last date ticks
+  const fd=data[0].date.slice(5), ld=data[n-1].date.slice(5);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${unitLabel} over last ${n} check-ins">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${color}" stop-opacity=".32"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+    <text x="${L}" y="${H-6}" fill="${C.ink}" font-size="8" font-weight="700">${fd}</text>
+    <text x="${W-R}" y="${H-6}" fill="${C.ink}" font-size="8" font-weight="700" text-anchor="end">${ld}</text>
+  </svg>`;
+}
+function svgBarChart(groups, color, yMax, valFmt){
+  // groups: [{label, value, n}]
+  const W=320,H=140, L=8,R=8,T=14,B=34;
+  const bw=(W-L-R)/groups.length;
+  let bars='';
+  groups.forEach((g,i)=>{
+    const cx=L+i*bw+bw/2;
+    const has=g.n>0;
+    const bh=has? (g.value/yMax)*(H-T-B) : 0;
+    const by=H-B-bh;
+    const w=Math.min(64,bw-16);
+    if(has){
+      bars+=`<rect x="${(cx-w/2).toFixed(1)}" y="${by.toFixed(1)}" width="${w}" height="${Math.max(2,bh).toFixed(1)}" rx="4" fill="${color}"/>`;
+      bars+=`<text x="${cx.toFixed(1)}" y="${(by-5).toFixed(1)}" fill="#f3f1fb" font-size="11" font-weight="800" text-anchor="middle">${valFmt(g.value)}</text>`;
+    } else {
+      bars+=`<text x="${cx.toFixed(1)}" y="${(H-B-6).toFixed(1)}" fill="${C.ink}" font-size="9" font-weight="700" text-anchor="middle">no data</text>`;
+    }
+    bars+=`<text x="${cx.toFixed(1)}" y="${(H-B+14).toFixed(1)}" fill="${C.ink}" font-size="9.5" font-weight="800" text-anchor="middle">${g.label}</text>`;
+    bars+=`<text x="${cx.toFixed(1)}" y="${(H-B+25).toFixed(1)}" fill="${C.ink}" font-size="8" font-weight="700" text-anchor="middle" opacity=".8">n=${g.n}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">
+    <line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="${C.grid}" stroke-width="1"/>
+    ${bars}
+  </svg>`;
+}
+function renderTrends(){
+  const box=document.getElementById('trends-content');
+  const all=loadEntries();
+  if (all.length<1){
+    box.innerHTML='<div class="empty"><div class="big">📈</div><h3>No data yet</h3><div>Log a few check-ins and your trends appear here.</div></div>';
+    return;
+  }
+  const last14=all.slice(-14);
+  const avgMood=mean(last14.map(e=>e.mood));
+  const avgEnergy=mean(last14.filter(e=>e.energy!=null).map(e=>e.energy));
+  const avgStress=mean(last14.map(e=>e.stress));
+  const hasEnergy=last14.some(e=>e.energy!=null);
+  // social groups (avg mood)
+  const socialOrder=['none','some','lots'];
+  const socialGroups=socialOrder.map(s=>{const g=all.filter(e=>e.social===s);return{label:s,value:mean(g.map(e=>e.mood)),n:g.length};});
+  // caffeine groups (avg energy)
+  const caffOrder=['none','before 2pm','after 2pm'];
+  const caffLabels={'none':'None','before 2pm':'Before 2','after 2pm':'After 2'};
+  const caffGroups=caffOrder.map(c=>{const g=all.filter(e=>e.caffeine===c && e.energy!=null);return{label:caffLabels[c],value:mean(g.map(e=>e.energy)),n:g.length};});
+  const alcDays=all.filter(e=>e.alcohol).length;
+  const cannaDays=all.filter(e=>e.cannabis).length;
+
+  box.innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="k">😊 Avg mood</div><div class="v" style="color:${C.mood}">${avgMood.toFixed(1)}<small>/7</small></div></div>
+      <div class="stat-tile"><div class="k">⚡ Avg energy</div><div class="v" style="color:${C.energy}">${hasEnergy?avgEnergy.toFixed(1):'—'}<small>/5</small></div></div>
+      <div class="stat-tile"><div class="k">😰 Avg stress</div><div class="v" style="color:${C.stress}">${avgStress.toFixed(1)}<small>/7</small></div></div>
+      <div class="stat-tile"><div class="k">🗓 Check-ins</div><div class="v">${all.length}</div></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Mood <span style="color:${C.mood};font-size:12px">last ${Math.min(30,all.length)}</span></h3>
+      <div class="sub">1–7 per check-in</div>
+      ${svgLineChart(all,'mood',C.mood,1,7,'mood')}
+    </div>
+
+    <div class="chart-card">
+      <h3>Energy <span style="color:${C.energy};font-size:12px">last ${Math.min(30,all.filter(e=>e.energy!=null).length)}</span></h3>
+      <div class="sub">1–5 readiness — drops before overreaching shows elsewhere</div>
+      ${svgLineChart(all,'energy',C.energy,1,5,'energy')}
+    </div>
+
+    <div class="chart-card">
+      <h3>Mood by social contact</h3>
+      <div class="sub">Average mood on days grouped by face-to-face contact</div>
+      ${svgBarChart(socialGroups,C.mood,7,v=>v.toFixed(1))}
+    </div>
+
+    <div class="chart-card">
+      <h3>Energy by caffeine timing</h3>
+      <div class="sub">Average next-day-readiness proxy grouped by when you had caffeine</div>
+      ${svgBarChart(caffGroups,C.energy,5,v=>v.toFixed(1))}
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="k">🍷 Alcohol days</div><div class="v">${alcDays}</div></div>
+      <div class="stat-tile"><div class="k">🌿 Cannabis days</div><div class="v">${cannaDays}</div></div>
+    </div>`;
 }
 
 /* ---------------- Toast ---------------- */
@@ -617,6 +823,7 @@ function toast(msg, kind){
 /* ---------------- Init ---------------- */
 function init(){
   buildScale('mood',[1,2,3,4,5,6,7]);
+  buildScale('energy',[1,2,3,4,5]);
   buildScale('stress',[1,2,3,4,5,6,7]);
   buildScale('fullness',[2,3,4,5]);
   resetDraft();
