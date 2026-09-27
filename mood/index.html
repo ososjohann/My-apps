@@ -112,6 +112,25 @@
   .chart-card svg{width:100%;display:block;overflow:visible;}
   .chart-card .n-note{font-size:11px;font-weight:700;color:var(--muted);margin-top:8px;text-align:center;}
 
+  /* Insight callout + driver table + deltas */
+  .insight{background:linear-gradient(135deg,rgba(154,140,255,.20),rgba(192,140,255,.09));border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:14px;font-size:13.5px;font-weight:700;line-height:1.45;}
+  .insight .lead{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-bottom:4px;}
+  .insight b{color:#fff;font-weight:900;}
+  .delta{font-size:11px;font-weight:900;white-space:nowrap;}
+  .delta.good{color:var(--good);} .delta.bad{color:var(--bad);} .delta.flat{color:var(--muted);}
+  .stat-tile .d{margin-top:5px;}
+  .dtable{width:100%;border-collapse:collapse;font-size:12px;}
+  .dtable th{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800;text-align:center;padding:0 4px 7px;}
+  .dtable th.l{text-align:left;}
+  .dtable td{padding:7px 4px;border-top:1px solid var(--border);vertical-align:middle;}
+  .dtable td.l{font-weight:800;white-space:nowrap;}
+  .dtable .n{color:var(--muted);font-weight:700;font-size:10.5px;}
+  .cell{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .mbar{position:relative;flex:1;height:15px;background:var(--surface2);border-radius:5px;overflow:hidden;min-width:40px;max-width:90px;}
+  .mbar>span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;}
+  .mnum{font-weight:900;font-variant-numeric:tabular-nums;min-width:24px;text-align:right;}
+  .dash{color:var(--muted);text-align:center;font-weight:700;}
+
   textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:15px;padding:11px 13px;outline:none;resize:none;min-height:46px;transition:border-color .15s;}
   textarea:focus{border-color:var(--accent);}
 
@@ -693,49 +712,134 @@ function renderTrends(){
     box.innerHTML='<div class="empty"><div class="big">📈</div><h3>No data yet</h3><div>Log a few check-ins and your trends appear here.</div></div>';
     return;
   }
-  const last14=all.slice(-14);
-  const avgMood=mean(last14.map(e=>e.mood));
-  const avgEnergy=mean(last14.filter(e=>e.energy!=null).map(e=>e.energy));
-  const avgStress=mean(last14.map(e=>e.stress));
-  const hasEnergy=last14.some(e=>e.energy!=null);
-  // social groups (avg mood)
+  const withE=all.filter(e=>e.energy!=null);
+  const overallMood=mean(all.map(e=>e.mood));
+  const overallEnergy=withE.length?mean(withE.map(e=>e.energy)):null;
+
+  /* ---- snapshot: last 7 vs prior 7 ---- */
+  const last7=all.slice(-7), prev7=all.slice(-14,-7);
+  const avg=(arr,k)=>{const v=arr.filter(e=>e[k]!=null).map(e=>e[k]);return v.length?mean(v):null;};
+  function deltaLine(cur,prev,goodUp){
+    if(cur==null||prev==null) return '';
+    const d=cur-prev;
+    if(Math.abs(d)<0.05) return '<div class="d delta flat">≈ vs prior 7</div>';
+    const up=d>0, good=goodUp?up:!up;
+    return `<div class="d delta ${good?'good':'bad'}">${up?'▲':'▼'} ${Math.abs(d).toFixed(1)} vs prior 7</div>`;
+  }
+  const m7=avg(last7,'mood'), e7=avg(last7,'energy'), s7=avg(last7,'stress');
+  const mP=avg(prev7,'mood'), eP=avg(prev7,'energy'), sP=avg(prev7,'stress');
+
+  /* ---- current streak (tolerant of an unlogged today) ---- */
+  const dset=new Set(all.map(e=>e.date));
+  let streak=0, cur=new Date();
+  if(!dset.has(fmtLocal(cur))) cur.setDate(cur.getDate()-1);
+  while(dset.has(fmtLocal(cur))){ streak++; cur.setDate(cur.getDate()-1); }
+
+  /* ---- drivers: avg mood & energy under each condition ---- */
+  const cnt=e=>alcoholToCount(e.alcohol?e.alcohol_amount:0);
+  function statFor(pred){
+    const g=all.filter(pred);
+    const ge=g.filter(e=>e.energy!=null);
+    return {n:g.length, mood:g.length?mean(g.map(e=>e.mood)):null, energy:ge.length?mean(ge.map(e=>e.energy)):null};
+  }
+  const drivers=[
+    {label:'🍷 Sober',        s:statFor(e=>cnt(e)===0)},
+    {label:'🍷 1–2 drinks',   s:statFor(e=>cnt(e)>=1&&cnt(e)<=2)},
+    {label:'🍷 3+ drinks',    s:statFor(e=>cnt(e)>=3)},
+    {label:'🌿 No cannabis',  s:statFor(e=>!e.cannabis)},
+    {label:'🌿 Cannabis',     s:statFor(e=>!!e.cannabis)},
+    {label:'🫂 Little/no contact', s:statFor(e=>e.social==='none'||e.social==='virtual')},
+    {label:'🫂 Some/lots contact', s:statFor(e=>e.social==='some'||e.social==='lots')},
+  ];
+  function cell(val,max,base,color){
+    if(val==null) return '<td class="dash">—</td>';
+    const pct=Math.max(6,Math.min(100,val/max*100));
+    const d=base==null?0:val-base;
+    const cls=Math.abs(d)<0.15?'flat':(d>0?'good':'bad');
+    const dtxt=base==null?'':(Math.abs(d)<0.15?'≈ avg':((d>0?'+':'−')+Math.abs(d).toFixed(1)));
+    return `<td><div class="cell"><div class="mbar"><span style="width:${pct}%;background:${color}"></span></div><span class="mnum">${val.toFixed(1)}</span></div><div class="delta ${cls}" style="text-align:right;margin-top:3px">${dtxt}</div></td>`;
+  }
+  const rows=drivers.map(dr=>dr.s.n===0?'':
+    `<tr><td class="l">${dr.label}<div class="n">n=${dr.s.n}</div></td>${cell(dr.s.mood,7,overallMood,C.mood)}${cell(dr.s.energy,5,overallEnergy,C.energy)}</tr>`).join('');
+
+  /* ---- headline insight: biggest mood lever (needs ≥3 days) ---- */
+  let lever=null;
+  drivers.forEach(dr=>{ if(dr.s.n>=3&&dr.s.mood!=null){ const d=dr.s.mood-overallMood; if(!lever||Math.abs(d)>Math.abs(lever.d)) lever={label:dr.label,d}; }});
+  let insight;
+  if(lever&&Math.abs(lever.d)>=0.3){
+    insight = lever.d>0
+      ? `<div class="lead">💡 Biggest lever</div>Your mood runs <b>+${lever.d.toFixed(1)}</b> on <b>${lever.label}</b> days versus your average. Lean into that.`
+      : `<div class="lead">💡 Biggest lever</div><b>${lever.label}</b> days cost you the most — mood runs <b>${lever.d.toFixed(1)}</b> below your average. Worth watching.`;
+  } else {
+    insight = `<div class="lead">💡 Building your picture</div>Keep logging — after ~1–2 weeks the patterns in what lifts and drags your mood become clear here.`;
+  }
+
+  /* ---- day-of-week mood rhythm ---- */
+  const wd=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], wdM=[[],[],[],[],[],[],[]];
+  all.forEach(e=>{ const idx=(new Date(e.date+'T12:00:00').getDay()+6)%7; wdM[idx].push(e.mood); });
+  const wdGroups=wd.map((l,i)=>({label:l,value:wdM[i].length?mean(wdM[i]):0,n:wdM[i].length}));
+
+  /* ---- social breakdown (4 level) ---- */
   const socialOrder=['none','virtual','some','lots'];
-  const socialGroups=socialOrder.map(s=>{const g=all.filter(e=>e.social===s);return{label:s,value:mean(g.map(e=>e.mood)),n:g.length};});
-  // energy by social contact (avg energy) — the second bar chart
-  const energyBySocial=socialOrder.map(s=>{const g=all.filter(e=>e.social===s && e.energy!=null);return{label:s,value:mean(g.map(e=>e.energy)),n:g.length};});
-  const alcDays=all.filter(e=>e.alcohol).length;
-  const cannaDays=all.filter(e=>e.cannabis).length;
+  const socialMood=socialOrder.map(s=>{const g=all.filter(e=>e.social===s);return{label:s,value:g.length?mean(g.map(e=>e.mood)):0,n:g.length};});
+  const socialEnergy=socialOrder.map(s=>{const g=all.filter(e=>e.social===s&&e.energy!=null);return{label:s,value:g.length?mean(g.map(e=>e.energy)):0,n:g.length};});
+
+  const alcDays=all.filter(e=>e.alcohol).length, cannaDays=all.filter(e=>e.cannabis).length;
+  const nWin=n=>Math.min(30,n);
 
   box.innerHTML=`
     <div class="stat-grid">
-      <div class="stat-tile"><div class="k">😊 Avg mood</div><div class="v" style="color:${C.mood}">${avgMood.toFixed(1)}<small>/7</small></div></div>
-      <div class="stat-tile"><div class="k">⚡ Avg energy</div><div class="v" style="color:${C.energy}">${hasEnergy?avgEnergy.toFixed(1):'—'}<small>/5</small></div></div>
-      <div class="stat-tile"><div class="k">😰 Avg stress</div><div class="v" style="color:${C.stress}">${avgStress.toFixed(1)}<small>/7</small></div></div>
-      <div class="stat-tile"><div class="k">🗓 Check-ins</div><div class="v">${all.length}</div></div>
+      <div class="stat-tile"><div class="k">😊 Mood</div><div class="v" style="color:${C.mood}">${m7!=null?m7.toFixed(1):'—'}<small>/7</small></div>${deltaLine(m7,mP,true)}</div>
+      <div class="stat-tile"><div class="k">⚡ Energy</div><div class="v" style="color:${C.energy}">${e7!=null?e7.toFixed(1):'—'}<small>/5</small></div>${deltaLine(e7,eP,true)}</div>
+      <div class="stat-tile"><div class="k">😰 Stress</div><div class="v" style="color:${C.stress}">${s7!=null?s7.toFixed(1):'—'}<small>/7</small></div>${deltaLine(s7,sP,false)}</div>
+      <div class="stat-tile"><div class="k">🔥 Streak</div><div class="v">${streak}<small>day${streak===1?'':'s'}</small></div><div class="d delta flat">${all.length} logged total</div></div>
+    </div>
+
+    <div class="insight">${insight}</div>
+
+    <div class="chart-card">
+      <h3>What moves your mood &amp; energy</h3>
+      <div class="sub">Your average on each kind of day — ▲/▼ is vs your overall average</div>
+      <table class="dtable">
+        <thead><tr><th class="l">Kind of day</th><th>Avg mood</th><th>Avg energy</th></tr></thead>
+        <tbody>${rows||'<tr><td class="dash" colspan="3">Not enough data yet</td></tr>'}</tbody>
+      </table>
     </div>
 
     <div class="chart-card">
-      <h3>Mood <span style="color:${C.mood};font-size:12px">last ${Math.min(30,all.length)}</span></h3>
+      <h3>Mood over time <span style="color:${C.mood};font-size:12px">last ${nWin(all.length)}</span></h3>
       <div class="sub">1–7 per check-in</div>
       ${svgLineChart(all,'mood',C.mood,1,7,'mood')}
     </div>
 
     <div class="chart-card">
-      <h3>Energy <span style="color:${C.energy};font-size:12px">last ${Math.min(30,all.filter(e=>e.energy!=null).length)}</span></h3>
-      <div class="sub">1–5 readiness — drops before overreaching shows elsewhere</div>
+      <h3>Energy over time <span style="color:${C.energy};font-size:12px">last ${nWin(withE.length)}</span></h3>
+      <div class="sub">1–5 readiness — dips before overreaching shows elsewhere</div>
       ${svgLineChart(all,'energy',C.energy,1,5,'energy')}
+    </div>
+
+    <div class="chart-card">
+      <h3>Stress over time <span style="color:${C.stress};font-size:12px">last ${nWin(all.length)}</span></h3>
+      <div class="sub">1–7 per check-in — lower is calmer</div>
+      ${svgLineChart(all,'stress',C.stress,1,7,'stress')}
+    </div>
+
+    <div class="chart-card">
+      <h3>Mood by day of week</h3>
+      <div class="sub">Where your good and rough days tend to fall</div>
+      ${svgBarChart(wdGroups,C.mood,7,v=>v.toFixed(1))}
     </div>
 
     <div class="chart-card">
       <h3>Mood by social contact</h3>
       <div class="sub">Average mood grouped by how much contact you had</div>
-      ${svgBarChart(socialGroups,C.mood,7,v=>v.toFixed(1))}
+      ${svgBarChart(socialMood,C.mood,7,v=>v.toFixed(1))}
     </div>
 
     <div class="chart-card">
       <h3>Energy by social contact</h3>
       <div class="sub">Average energy grouped by how much contact you had</div>
-      ${svgBarChart(energyBySocial,C.energy,5,v=>v.toFixed(1))}
+      ${svgBarChart(socialEnergy,C.energy,5,v=>v.toFixed(1))}
     </div>
 
     <div class="stat-grid">
