@@ -10,8 +10,7 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
 
 - Tap **mood (1–7)**, **energy (1–5)**, **stress (1–7)**, **fullness (1–5)** — no sliders.
 - **Social contact** as a 3×3 matrix — *type* (strangers / acquaintances / friends & family,
-  incl. partner) × *amount of time* (None / Some <2h / A lot 2h+). All-None reveals an
-  **alone follow-up** (recharged / neutral / lonely).
+  incl. partner) × *amount of time* (None / Some <2h / A lot 2h+). All-None = an alone day.
 - **Alcohol** as a drink-count stepper; **cannabis** as a None/Small/Medium/Large dropdown.
 - **Three words for today** — added one at a time, with suggestions ranked by your own
   most-used words (free typing always allowed).
@@ -25,7 +24,6 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
   *yesterday* (you log at night, often after midnight). Always shown, always editable.
 - Entries persist in `localStorage`; a **History** tab lists them (edit / delete /
   mark exported / clear exported).
-- Optional: a "same as last check-in" prefill.
 
 ## Export format (the important part)
 
@@ -33,13 +31,12 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
 health columns were added. The header is now:
 
 ```
-date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,soc_strangers,soc_acquaint,soc_family,alone_feeling,words,health_flag,health_tags,health_note
+date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,soc_strangers,soc_acquaint,soc_family,words,health_flag,health_tags,health_note
 ```
 
 Everything up through `energy_label` is unchanged. New columns:
 - `soc_strangers` / `soc_acquaint` / `soc_family` — amount of time with each type: `0` None,
   `1` Some (<2h), `2` A lot (2h+). All three `0` = an alone day.
-- `alone_feeling` — `recharged` / `neutral` / `lonely` (only on alone days, else blank).
 - `words` — up to three day-summary words, comma-separated (CSV-quoted).
 - `health_flag` — `0`/`1`; `health_tags` — semicolon-separated symptoms; `health_note` — free text.
 
@@ -52,7 +49,7 @@ Rows logged before v2 leave the new columns blank.
 Example row:
 
 ```
-2026-10-18,6,Great,3,4,Full,0,,0,,,4,Good,1,0,2,,"productive, calm, sunny",0,,
+2026-10-18,6,Great,3,4,Full,0,,0,,,4,Good,1,0,2,"productive, calm, sunny",0,,
 ```
 
 - **Copy** → clipboard (paste into desktop chat). This is the primary path.

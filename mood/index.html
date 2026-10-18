@@ -91,16 +91,6 @@
   .cell.sel.lv0{background:linear-gradient(135deg,#5b5676,#6f698c);}
   .cell.sel.lv1{background:linear-gradient(135deg,#7d6fd6,#9a8cff);}
   .cell.sel.lv2{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 14px var(--glow);}
-  .followup{margin-top:11px;padding-top:11px;border-top:1px dashed var(--border);display:none;}
-  .followup.show{display:block;}
-  .followup .fq{font-size:12.5px;font-weight:800;margin-bottom:8px;}
-  .feelseg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-  .feelseg button{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:800;border-radius:11px;padding:9px 4px;cursor:pointer;transition:all .12s;}
-  .feelseg button:active{transform:scale(.96);}
-  .feelseg button.sel{border-color:transparent;color:#fff;}
-  .feelseg button[data-v="recharged"].sel{background:linear-gradient(135deg,#22c55e,#4ade80);}
-  .feelseg button[data-v="neutral"].sel{background:linear-gradient(135deg,#6b6f8c,#8a7fb0);}
-  .feelseg button[data-v="lonely"].sel{background:linear-gradient(135deg,#ef7a7a,#f87171);}
 
   /* Three words + health chips */
   .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;align-items:center;}
@@ -175,8 +165,6 @@
   .save-btn{width:100%;border:none;border-radius:14px;color:#fff;font-family:inherit;font-size:17px;font-weight:900;padding:13px;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 20px var(--glow);transition:all .15s;margin-top:6px;letter-spacing:.01em;}
   .save-btn:active{transform:scale(.98);}
   .save-btn:disabled{opacity:.45;box-shadow:none;}
-  .prefill-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:11px;color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:800;padding:9px;cursor:pointer;margin-bottom:11px;transition:all .15s;}
-  .prefill-btn:active{color:var(--text);border-color:var(--text);}
 
   /* History */
   .entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
@@ -240,7 +228,6 @@
       <input type="date" id="date-input" onchange="onDateChange()">
     </div>
 
-    <button class="prefill-btn" id="prefill-btn" onclick="prefillYesterday()" style="display:none">↺ Same as my last check-in</button>
 
     <div class="field">
       <div class="field-head"><div class="field-title">😊 Mood</div><div class="field-pick" id="pick-mood"></div></div>
@@ -268,14 +255,6 @@
         <div class="mh">None</div><div class="mh">Some<div class="mh sub">&lt;2h</div></div><div class="mh">A lot<div class="mh sub">2h+</div></div>
       </div>
       <div id="soc-rows"></div>
-      <div class="followup" id="alone-followup">
-        <div class="fq">A day on your own — how did it feel?</div>
-        <div class="feelseg" id="feelseg">
-          <button type="button" data-v="recharged" onclick="pickFeel('recharged')">🙂 Recharged</button>
-          <button type="button" data-v="neutral" onclick="pickFeel('neutral')">😐 Neutral</button>
-          <button type="button" data-v="lonely" onclick="pickFeel('lonely')">😕 Lonely</button>
-        </div>
-      </div>
     </div>
 
     <div class="field dd-grid">
@@ -359,9 +338,9 @@
 const MOOD_LABELS = {1:'Terrible',2:'Bad',3:'Meh',4:'Okay',5:'Good',6:'Great',7:'Amazing'};
 const FULL_LABELS = {1:'Starving',2:'Hungry',3:'Satisfied',4:'Full',5:'Stuffed'};
 const ENERGY_LABELS = {1:'Drained',2:'Low',3:'OK',4:'Good',5:'Energized'};
-// Schema v2: `social` (enum) replaced by a type x amount-of-time matrix + alone_feeling,
+// Schema v2: `social` (enum) replaced by a type x amount-of-time matrix,
 // plus three `words` and an optional health flag. Columns appended after energy_label.
-const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,soc_strangers,soc_acquaint,soc_family,alone_feeling,words,health_flag,health_tags,health_note';
+const CSV_HEADER = 'date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,soc_strangers,soc_acquaint,soc_family,words,health_flag,health_tags,health_note';
 const STORE_KEY = 'mood_entries_v1';
 // Social matrix definition: types (rows) x amount-of-time (0 None / 1 Some <2h / 2 A lot 2h+)
 const SOC_TYPES = [
@@ -380,7 +359,7 @@ let exportFmt = 'csv';
 
 /* ---------------- Draft state (current check-in) ---------------- */
 function freshDraft(date){ return { date:date||'', mood:null, energy:null, stress:null, fullness:null,
-  soc:{strangers:0,acquaint:0,family:0}, alone_feeling:null,
+  soc:{strangers:0,acquaint:0,family:0},
   words:[], health_on:false, health_tags:new Set(), health_note:'',
   alcohol:0, alcohol_amount:'', cannabis:0, cannabis_amount:'' }; }
 let draft = freshDraft();
@@ -434,7 +413,6 @@ function buildSocMatrix(){
 }
 function setSoc(k,v){
   draft.soc[k]=v;
-  if(v>0){ draft.alone_feeling=null; document.querySelectorAll('#feelseg button').forEach(b=>b.classList.remove('sel')); }
   syncSoc();
 }
 function syncSoc(){
@@ -442,18 +420,11 @@ function syncSoc(){
     const on=+c.dataset.v===draft.soc[c.dataset.k];
     c.className='cell'+(on?` sel lv${c.dataset.v}`:'');
   });
-  const alone=socTotal()===0;
-  document.getElementById('alone-followup').classList.toggle('show',alone);
   const pick=document.getElementById('pick-social');
-  if(alone){ pick.textContent = draft.alone_feeling?('alone · '+draft.alone_feeling):'alone'; }
+  if(socTotal()===0){ pick.textContent='alone'; }
   else { const parts=SOC_TYPES.filter(t=>draft.soc[t.k]>0).map(t=>t.label.split(' ')[0].toLowerCase()); pick.textContent=parts.join(' + '); }
 }
 function socTotal(){ return draft.soc.strangers+draft.soc.acquaint+draft.soc.family; }
-function pickFeel(v){
-  draft.alone_feeling=v;
-  document.querySelectorAll('#feelseg button').forEach(b=>b.classList.toggle('sel', b.dataset.v===v));
-  syncSoc();
-}
 
 /* ---------------- Three words ---------------- */
 function wordFreq(){
@@ -501,7 +472,7 @@ function setSubstance(kind, val){
   draft[kind] = val ? 1 : 0;
   draft[kind+'_amount'] = val || '';
   const sel = document.getElementById('sel-'+kind);
-  if (sel.value !== val) sel.value = val;       // keep UI in sync when called from edit/prefill
+  if (sel.value !== val) sel.value = val;       // keep UI in sync when called from edit
   sel.classList.toggle('on', !!val);
 }
 
@@ -566,28 +537,11 @@ function resetDraft(){
   updateSaveState();
 }
 
-/* ---------------- Prefill from last entry (nice-to-have) ---------------- */
-function prefillYesterday(){
-  const list = loadEntries();
-  if (!list.length) return;
-  const last = list[list.length-1];
-  pickScale('mood', last.mood);
-  if (last.energy!=null) pickScale('energy', last.energy);
-  pickScale('stress', last.stress);
-  pickScale('fullness', last.fullness);
-  draft.soc = { strangers:last.soc_strangers||0, acquaint:last.soc_acquaint||0, family:last.soc_family||0 };
-  draft.alone_feeling = last.alone_feeling || null;
-  if(draft.alone_feeling) pickFeel(draft.alone_feeling); else syncSoc();
-  setAlcohol(last.alcohol ? alcoholToCount(last.alcohol_amount) : 0);
-  setSubstance('cannabis', last.cannabis ? (last.cannabis_amount||'medium') : '');
-  toast('Prefilled from last check-in');
-}
 
 /* ---------------- Save entry ---------------- */
 function saveEntry(){
   if (draft.mood==null || draft.energy==null || draft.stress==null || draft.fullness==null) return;
   const list = loadEntries();
-  const alone = socTotal()===0;
   const hnote = document.getElementById('health-note').value.trim();
   const htags = [...draft.health_tags];
   const healthOn = draft.health_on && (htags.length>0 || hnote);
@@ -609,7 +563,6 @@ function saveEntry(){
     soc_strangers: draft.soc.strangers,
     soc_acquaint: draft.soc.acquaint,
     soc_family: draft.soc.family,
-    alone_feeling: alone ? (draft.alone_feeling||'') : '',
     words: draft.words.slice(),
     health_flag: healthOn ? 1 : 0,
     health_tags: healthOn ? htags : [],
@@ -637,8 +590,7 @@ function editEntry(id){
   pickScale('mood', e.mood); pickScale('stress', e.stress); pickScale('fullness', e.fullness);
   if (e.energy!=null) pickScale('energy', e.energy);
   draft.soc = { strangers:e.soc_strangers||0, acquaint:e.soc_acquaint||0, family:e.soc_family||0 };
-  draft.alone_feeling = e.alone_feeling || null;
-  if(draft.alone_feeling) pickFeel(draft.alone_feeling); else syncSoc();
+  syncSoc();
   draft.words = (e.words||[]).slice(); renderWords();
   clearHealth();
   if(e.health_flag){ openHealth(); (e.health_tags||[]).forEach(t=>draft.health_tags.add(t)); renderSymptoms(); document.getElementById('health-note').value=e.health_note||''; draft.health_on=true; }
@@ -668,7 +620,7 @@ function hasSocV2(e){ return e.soc_strangers!=null || e.soc_acquaint!=null || e.
 function socTotalE(e){ return (e.soc_strangers||0)+(e.soc_acquaint||0)+(e.soc_family||0); }
 function socSummary(e){
   if(!hasSocV2(e)) return e.social||'—';                 // legacy pre-v2 entry
-  if(socTotalE(e)===0) return 'alone'+(e.alone_feeling?(' ('+e.alone_feeling+')'):'');
+  if(socTotalE(e)===0) return 'alone';
   const A=['','some','lots'], parts=[];
   if(e.soc_strangers) parts.push('strangers:'+A[e.soc_strangers]);
   if(e.soc_acquaint)  parts.push('acquaint:'+A[e.soc_acquaint]);
@@ -681,7 +633,7 @@ function toCsvRow(e){
     e.date, e.mood, e.mood_label, e.stress, e.fullness, e.fullness_label,
     e.alcohol, e.alcohol_amount, e.cannabis, e.cannabis_amount, csvEscape(e.note),
     blank(e.energy), eLabel,
-    blank(e.soc_strangers), blank(e.soc_acquaint), blank(e.soc_family), csvEscape(blank(e.alone_feeling)),
+    blank(e.soc_strangers), blank(e.soc_acquaint), blank(e.soc_family),
     csvEscape((e.words||[]).join(', ')),
     blank(e.health_flag), csvEscape((e.health_tags||[]).join('; ')), csvEscape(blank(e.health_note))
   ].join(',');
@@ -813,8 +765,7 @@ function renderStreak(){
   const list = loadEntries();
   document.getElementById('streak').textContent = list.length ? (list.length+' logged') : '';
 }
-function renderAll(){ renderExportBar(); renderEntries(); renderBadges(); renderStreak();
-  document.getElementById('prefill-btn').style.display = loadEntries().length ? 'block':'none'; }
+function renderAll(){ renderExportBar(); renderEntries(); renderBadges(); renderStreak(); }
 
 /* ---------------- Views ---------------- */
 function showView(name){
@@ -934,7 +885,6 @@ function renderTrends(){
     {label:'🫂 Close contact', s:statFor(hasClose)},
     {label:'🧍 Weak ties only', s:statFor(weakOnly)},
     {label:'🚫 Alone', s:statFor(isAlone)},
-    {label:'😕 Alone & lonely', s:statFor(e=>isAlone(e)&&e.alone_feeling==='lonely')},
   ];
   function cell(val,max,base,color){
     if(val==null) return '<td class="dash">—</td>';
