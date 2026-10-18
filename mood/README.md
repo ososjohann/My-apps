@@ -9,41 +9,50 @@ Live app: static site in this `mood/` folder — deploy to Netlify (see below).
 ## What it does
 
 - Tap **mood (1–7)**, **energy (1–5)**, **stress (1–7)**, **fullness (1–5)** — no sliders.
-- One-tap **social contact** (none / virtual / some / lots).
-- **Alcohol** / **cannabis** as one dropdown each: None / Small / Medium / Large.
-- A **Trends** tab charts mood & energy over time and the correlations that matter —
-  mood and energy by social contact — plus rolling averages. All drawn as inline SVG
-  (no chart library, still fully offline).
-- Free-text **note**.
+- **Social contact** as a 3×3 matrix — *type* (strangers / acquaintances / friends & family,
+  incl. partner) × *amount of time* (None / Some <2h / A lot 2h+). All-None reveals an
+  **alone follow-up** (recharged / neutral / lonely).
+- **Alcohol** as a drink-count stepper; **cannabis** as a None/Small/Medium/Large dropdown.
+- **Three words for today** — added one at a time, with suggestions ranked by your own
+  most-used words (free typing always allowed).
+- Optional **health flag** (collapsed by default): quick symptom chips + a free-text detail,
+  for the off days (GI, headache, etc.) a wearable can't catch.
+- A **Trends** tab: a headline "biggest lever", a "what moves your mood & energy" driver
+  table, mood/energy/stress over time, day-of-week, and mood/energy by contact type —
+  all inline SVG (no chart library, fully offline).
+- Free-text **note** (still here, alongside the three words).
 - **Date defaults to the day that just ended**: before 5am local time it defaults to
   *yesterday* (you log at night, often after midnight). Always shown, always editable.
 - Entries persist in `localStorage`; a **History** tab lists them (edit / delete /
   mark exported / clear exported).
-- Optional: 14-day mood sparkline and a "same as last check-in" prefill.
+- Optional: a "same as last check-in" prefill.
 
 ## Export format (the important part)
 
-The header of the desktop file is:
+**Schema v2.** The single `social` column was replaced by a richer set, and `words` +
+health columns were added. The header is now:
 
 ```
-date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,social
+date,mood,mood_label,stress,fullness,fullness_label,alcohol,alcohol_amount,cannabis,cannabis_amount,note,energy,energy_label,soc_strangers,soc_acquaint,soc_family,alone_feeling,words,health_flag,health_tags,health_note
 ```
 
-The `energy` / `energy_label` / `social` columns are **appended after `note`** so every
-original column keeps its position — add these three headers to the desktop
-`mood_tracker.csv` once; rows exported before they existed simply leave them blank.
+Everything up through `energy_label` is unchanged. New columns:
+- `soc_strangers` / `soc_acquaint` / `soc_family` — amount of time with each type: `0` None,
+  `1` Some (<2h), `2` A lot (2h+). All three `0` = an alone day.
+- `alone_feeling` — `recharged` / `neutral` / `lonely` (only on alone days, else blank).
+- `words` — up to three day-summary words, comma-separated (CSV-quoted).
+- `health_flag` — `0`/`1`; `health_tags` — semicolon-separated symptoms; `health_note` — free text.
 
 The **Export** button (Export tab) emits rows in exactly this order, **without the
-header**, one per line. The `mood_label`, `fullness_label`, and `energy_label` columns
-are auto-derived (mood 1 Terrible … 7 Amazing; fullness 1 Starving, 2 Hungry, 3
-Satisfied, 4 Full, 5 Stuffed; energy 1 Drained, 2 Low, 3 OK, 4 Good, 5 Energized).
-`social` is `none` / `virtual` / `some` / `lots`. Amount columns are **blank** (not `0`)
-when the flag is off. Notes containing a comma/quote/newline are CSV-quoted.
+header**. `mood_label` / `fullness_label` / `energy_label` are auto-derived (mood 1 Terrible
+… 7 Amazing; fullness 1 Starving … 5 Stuffed; energy 1 Drained … 5 Energized). `alcohol_amount`
+is a drink count. Notes/words/health detail containing a comma/quote/newline are CSV-quoted.
+Rows logged before v2 leave the new columns blank.
 
 Example row:
 
 ```
-2026-07-23,5,Good,5,4,Full,0,,1,large,released a substack post today!,4,Good,lots
+2026-10-18,6,Great,3,4,Full,0,,0,,,4,Good,1,0,2,,"productive, calm, sunny",0,,
 ```
 
 - **Copy** → clipboard (paste into desktop chat). This is the primary path.
